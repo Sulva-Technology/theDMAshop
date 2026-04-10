@@ -30,6 +30,7 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '@/lib/store';
 
 import AdminProducts from './AdminProducts';
@@ -51,14 +52,36 @@ const REVENUE_DATA = [
 
 export default function AdminDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user, setCurrentPage } = useStore();
+  const pathname = location.pathname;
+  const activeTab = pathname.endsWith('/products')
+    ? 'products'
+    : pathname.endsWith('/orders')
+      ? 'orders'
+      : pathname.endsWith('/customers')
+        ? 'customers'
+        : pathname.endsWith('/content')
+          ? 'cms'
+          : pathname.endsWith('/analytics')
+            ? 'analytics'
+            : 'dashboard';
+
+  const destinationForTab = (id: string) => {
+    if (id === 'dashboard') return '/admin';
+    if (id === 'inventory') return '/admin/products';
+    if (id === 'discounts') return '/admin/analytics';
+    if (id === 'settings') return '/admin/content';
+    if (id === 'cms') return '/admin/content';
+    return `/admin/${id}`;
+  };
 
   const NavItem = ({ icon: Icon, label, id }: { icon: any, label: string, id: string }) => {
     const active = activeTab === id;
     return (
       <button 
-        onClick={() => setActiveTab(id)}
+        onClick={() => navigate(destinationForTab(id))}
         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${active ? 'bg-primary text-primary-foreground font-medium' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}
       >
         <Icon className="h-5 w-5" />
@@ -81,7 +104,7 @@ export default function AdminDashboard() {
         return <AdminCMS />;
       case 'dashboard':
       default:
-        return <DashboardOverview onNavigate={setActiveTab} />;
+        return <DashboardOverview onNavigate={(tab) => navigate(tab === 'dashboard' ? '/admin' : `/admin/${tab}`)} />;
     }
   };
 
@@ -105,13 +128,13 @@ export default function AdminDashboard() {
             <NavItem icon={Users} label="Customers" id="customers" />
             
             <div className="mt-8 mb-6 px-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Management</div>
-            <NavItem icon={Package} label="Inventory" id="inventory" />
+            <NavItem icon={Package} label="Inventory" id="products" />
             <NavItem icon={Tag} label="Discounts" id="discounts" />
             <NavItem icon={BarChart3} label="Analytics" id="analytics" />
             <NavItem icon={Settings} label="Content (CMS)" id="cms" />
             
             <div className="mt-8 mb-6 px-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">System</div>
-            <NavItem icon={Settings} label="Settings" id="settings" />
+            <NavItem icon={Settings} label="Settings" id="cms" />
           </div>
 
           <div className="p-4 border-t border-border/50">
@@ -154,7 +177,7 @@ export default function AdminDashboard() {
               <Bell className="h-5 w-5 text-muted-foreground" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full border-2 border-background"></span>
             </Button>
-            <Button className="rounded-full gap-2 hidden sm:flex" onClick={() => setActiveTab('products')}>
+            <Button className="rounded-full gap-2 hidden sm:flex" onClick={() => navigate('/admin/products')}>
               <Plus className="h-4 w-4" />
               Add Product
             </Button>
@@ -182,7 +205,7 @@ function DashboardOverview({ onNavigate }: { onNavigate: (tab: string) => void }
   const { orders, products, customers } = useStore();
   
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-  const activeOrders = orders.filter(o => o.status === 'Processing' || o.status === 'Shipped').length;
+  const activeOrders = orders.filter(o => o.status === 'processing' || o.status === 'shipped').length;
   const totalCustomers = customers.length;
   
   // Get low stock products
@@ -338,14 +361,14 @@ function DashboardOverview({ onNavigate }: { onNavigate: (tab: string) => void }
             <tbody className="divide-y divide-border/50">
               {orders.slice(0, 5).map((order) => (
                 <tr key={order.id} className="hover:bg-secondary/10 transition-colors">
-                  <td className="px-6 py-4 font-medium">{order.id}</td>
+                  <td className="px-6 py-4 font-medium">{order.orderNumber}</td>
                   <td className="px-6 py-4">{order.customerName}</td>
                   <td className="px-6 py-4 text-muted-foreground">{new Date(order.date).toLocaleDateString()}</td>
                   <td className="px-6 py-4">
                     <Badge variant="outline" className={`border-none ${
-                      order.status === 'Delivered' ? 'bg-green-500/10 text-green-600' : 
-                      order.status === 'Processing' ? 'bg-blue-500/10 text-blue-600' : 
-                      order.status === 'Shipped' ? 'bg-purple-500/10 text-purple-600' :
+                      order.status === 'delivered' ? 'bg-green-500/10 text-green-600' : 
+                      order.status === 'processing' ? 'bg-blue-500/10 text-blue-600' : 
+                      order.status === 'shipped' ? 'bg-purple-500/10 text-purple-600' :
                       'bg-red-500/10 text-red-600'
                     }`}>
                       {order.status}

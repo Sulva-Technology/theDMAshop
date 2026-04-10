@@ -9,20 +9,21 @@ import { ImageUpload } from '@/components/ui/ImageUpload';
 import { Save, CheckCircle2 } from 'lucide-react';
 
 export default function AdminCMS() {
-  const { cmsContent, setCmsContent } = useStore();
+  const { cmsContent, saveCmsContent } = useStore();
   const [formData, setFormData] = useState<CMSContent>(cmsContent);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      setCmsContent(formData);
+    try {
+      await saveCmsContent(formData);
       setIsSaving(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    }, 800);
+    } catch {
+      setIsSaving(false);
+    }
   };
 
   const updateHero = (field: keyof CMSContent['hero'], value: string) => {

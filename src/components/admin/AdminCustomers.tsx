@@ -30,45 +30,9 @@ import { useStore } from '@/lib/store';
 
 export default function AdminCustomers() {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
-  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
-  const { customers, setCustomers } = useStore();
+  const { customers } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('lastActive');
-
-  const [newCustomer, setNewCustomer] = useState({
-    name: '',
-    email: '',
-    location: '',
-    status: 'New' as any
-  });
-
-  const handleSaveCustomer = () => {
-    if (!newCustomer.name || !newCustomer.email) {
-      toast.error("Name and email are required");
-      return;
-    }
-
-    const customer = {
-      id: `CUS-${Math.floor(Math.random() * 10000)}`,
-      name: newCustomer.name,
-      email: newCustomer.email,
-      location: newCustomer.location || 'Unknown',
-      orders: 0,
-      spent: 0,
-      status: newCustomer.status,
-      lastActive: 'Just now'
-    };
-
-    setCustomers([customer, ...customers]);
-    setIsAddCustomerOpen(false);
-    toast.success("Customer added successfully");
-    setNewCustomer({
-      name: '',
-      email: '',
-      location: '',
-      status: 'New'
-    });
-  };
 
   const filteredCustomers = customers.filter(c => {
     if (searchQuery) {
@@ -88,54 +52,16 @@ export default function AdminCustomers() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-heading font-bold">Customers</h1>
-          <p className="text-muted-foreground mt-1">Manage customer profiles, segments, and order history.</p>
+          <p className="text-muted-foreground mt-1">View customer profiles, segments, and order history from live account data.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="rounded-full bg-background border-border/50">
             Export
           </Button>
-          <Sheet open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
-            <SheetTrigger asChild>
-              <Button className="rounded-full font-bold premium-shadow-sm gap-2">
-                <UserPlus className="h-4 w-4" />
-                Add Customer
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-md overflow-y-auto border-l-0 sm:border-l border-border/50">
-              <SheetHeader className="p-6 border-b border-border/50">
-                <SheetTitle className="text-2xl font-heading font-bold">Add New Customer</SheetTitle>
-              </SheetHeader>
-              <div className="p-6 space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" placeholder="e.g. Jane Doe" className="h-12 rounded-xl bg-secondary/10 border-border/50" value={newCustomer.name} onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" placeholder="jane@example.com" className="h-12 rounded-xl bg-secondary/10 border-border/50" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input id="location" placeholder="e.g. New York, NY" className="h-12 rounded-xl bg-secondary/10 border-border/50" value={newCustomer.location} onChange={(e) => setNewCustomer({...newCustomer, location: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <select id="status" className="w-full h-12 px-3 rounded-xl bg-secondary/10 border border-border/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" value={newCustomer.status} onChange={(e) => setNewCustomer({...newCustomer, status: e.target.value})}>
-                      <option value="New">New</option>
-                      <option value="Active">Active</option>
-                      <option value="VIP">VIP</option>
-                      <option value="Guest">Guest</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              <SheetFooter className="p-6 border-t border-border/50 bg-background sticky bottom-0">
-                <Button variant="outline" onClick={() => setIsAddCustomerOpen(false)} className="rounded-xl h-12 w-full">Cancel</Button>
-                <Button className="rounded-xl h-12 font-bold premium-shadow-hover w-full" onClick={handleSaveCustomer}>Save Customer</Button>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
+          <Button className="rounded-full font-bold premium-shadow-sm gap-2" disabled>
+            <UserPlus className="h-4 w-4" />
+            Customers come from signups
+          </Button>
         </div>
       </div>
 

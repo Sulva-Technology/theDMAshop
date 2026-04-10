@@ -18,11 +18,16 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useLocation } from 'react-router-dom';
 import { useStore } from '@/lib/store';
 import { toast } from 'sonner';
 
 export default function Checkout() {
-  const { cart, clearCart, addOrder, user, setCurrentPage } = useStore();
+  const location = useLocation();
+  const isSuccessRoute = location.pathname === '/checkout/success';
+  const searchParams = new URLSearchParams(location.search);
+  const orderNumber = searchParams.get('orderNumber');
+  const { cart, clearCart, user, setCurrentPage } = useStore();
   const [isOrderSummaryOpen, setIsOrderSummaryOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('standard');
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
@@ -45,7 +50,14 @@ export default function Checkout() {
   const taxes = subtotal * 0.08; // 8% mock tax
   const total = subtotal + shippingCost + taxes;
 
-  const handleCheckout = () => {
+  React.useEffect(() => {
+    if (isSuccessRoute) {
+      clearCart();
+      setIsSuccess(true);
+    }
+  }, [clearCart, isSuccessRoute]);
+
+  const handleCheckout = async () => {
     if (cart.length === 0) {
       toast.error("Your cart is empty");
       return;
@@ -68,24 +80,53 @@ export default function Checkout() {
     }
     
     setIsProcessing(true);
-    // Simulate payment processing
-    setTimeout(() => {
-      const newOrder = {
-        id: `#ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-        customerName: `${firstName} ${lastName}`,
-        customerEmail: email,
-        date: new Date().toISOString(),
-        status: 'Processing' as const,
-        total: total,
-        items: [...cart]
+    try {
+      const country = 'US';
+      const payload = {
+        email,
+        shippingAddress: {
+          firstName,
+          lastName,
+          line1: address,
+          line2: '',
+          city,
+          state,
+          postalCode: zip,
+          country,
+        },
+        billingAddress: {
+          firstName,
+          lastName,
+          line1: address,
+          line2: '',
+          city,
+          state,
+          postalCode: zip,
+          country,
+        },
+        shippingMethod: deliveryMethod,
+        items: cart,
       };
-      
-      addOrder(newOrder);
+
+      const response = await fetch('/api/checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to create checkout session');
+      }
+
+      window.location.href = data.url;
+    } catch (error: any) {
+      toast.error(error?.message ?? 'Unable to start checkout');
       setIsProcessing(false);
-      setIsSuccess(true);
-      clearCart();
-      toast.success("Order placed successfully!");
-    }, 2000);
+      return;
+    }
   };
 
   if (isSuccess) {
@@ -101,7 +142,9 @@ export default function Checkout() {
           </div>
           <h1 className="text-4xl font-heading font-bold">Thank you!</h1>
           <p className="text-muted-foreground text-lg">
-            Your order has been placed successfully. We'll send you an email with your order details and tracking information shortly.
+            {orderNumber
+              ? `Order ${orderNumber} has been placed successfully. We'll send you an email with your order details and tracking information shortly.`
+              : "Your order has been placed successfully. We'll send you an email with your order details and tracking information shortly."}
           </p>
           <div className="pt-8">
             <Button 

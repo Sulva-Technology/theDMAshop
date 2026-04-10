@@ -1,57 +1,60 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Create a single supabase client for interacting with your database
-export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null as any;
+export const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey);
 
-export const uploadImage = async (file: File, bucket: string = 'media'): Promise<string | null> => {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase credentials not found. Returning a mock URL for preview purposes.');
+export const supabase: SupabaseClient | null = hasSupabaseConfig
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
+  : null;
+
+export function requireSupabase(): SupabaseClient {
+  if (!supabase) {
+    throw new Error('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
+  }
+  return supabase;
+}
+
+export async function uploadImage(file: File, bucket = 'media'): Promise<string | null> {
+  if (!supabase) {
     return URL.createObjectURL(file);
   }
 
-  try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${crypto.randomUUID()}.${fileExt}`;
+  const filePath = `${fileName}`;
+  const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, file, {
+    cacheControl: '3600',
+    upsert: false,
+  });
 
-    const { error: uploadError } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file);
-
-    if (uploadError) {
-      throw uploadError;
-    }
-
-    const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
-    return data.publicUrl;
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    throw error;
+  if (uploadError) {
+    throw uploadError;
   }
-};
 
-export const deleteImage = async (url: string, bucket: string = 'media') => {
-  if (!supabaseUrl || !supabaseAnonKey || url.startsWith('blob:')) {
+  const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+  return data.publicUrl;
+}
+
+export async function deleteImage(url: string, bucket = 'media') {
+  if (!supabase || url.startsWith('blob:')) {
     return;
   }
 
-  try {
-    // Extract file path from URL
-    const urlParts = url.split('/');
-    const fileName = urlParts[urlParts.length - 1];
+  const fileName = url.split('/').pop();
+  if (!fileName) {
+    return;
+  }
 
-    const { error } = await supabase.storage
-      .from(bucket)
-      .remove([fileName]);
-
-    if (error) {
-      throw error;
-    }
-  } catch (error) {
-    console.error('Error deleting image:', error);
+  const { error } = await supabase.storage.from(bucket).remove([fileName]);
+  if (error) {
     throw error;
   }
-};
+}

@@ -25,11 +25,12 @@ import { Label } from '@/components/ui/label';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { useStore } from '@/lib/store';
 import { toast } from 'sonner';
+import type { Product } from '@/lib/types';
 
 export default function AdminProducts() {
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
-  const { products, setProducts } = useStore();
+  const { products, saveProduct, archiveProduct } = useStore();
   
   const [newProduct, setNewProduct] = useState({
     title: '',
@@ -40,6 +41,8 @@ export default function AdminProducts() {
     compare: '',
     inventory: '',
     category: 'Tops',
+    colors: 'Default',
+    sizes: 'One Size',
     image: '',
     images: [] as string[]
   });
@@ -55,76 +58,106 @@ export default function AdminProducts() {
       compare: '',
       inventory: product.inventory.toString(),
       category: product.category,
+      colors: product.colors.join(', ') || 'Default',
+      sizes: product.sizes.join(', ') || 'One Size',
       image: product.image,
       images: product.images || []
     });
     setIsAddProductOpen(true);
   };
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!newProduct.title || !newProduct.price) {
       toast.error("Title and price are required");
       return;
     }
 
-    if (editingProductId) {
-      setProducts(products.map(p => {
-        if (p.id === editingProductId) {
-          return {
-            ...p,
-            name: newProduct.title,
-            summary: newProduct.summary,
-            description: newProduct.desc,
-            details: newProduct.details.split('\n').filter(d => d.trim() !== ''),
-            price: parseFloat(newProduct.price),
-            category: newProduct.category,
-            image: newProduct.image || newProduct.images[0] || p.image,
-            images: newProduct.images,
-            inventory: parseInt(newProduct.inventory) || 0,
-          };
-        }
-        return p;
-      }));
-      toast.success("Product updated successfully");
-    } else {
-      const product = {
-        id: `PROD-${Math.floor(Math.random() * 10000)}`,
+    try {
+      const productId = editingProductId || crypto.randomUUID();
+      const slug = newProduct.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const existing = products.find((product) => product.id === editingProductId);
+      const colors = newProduct.colors.split(',').map((value) => value.trim()).filter(Boolean);
+      const sizes = newProduct.sizes.split(',').map((value) => value.trim()).filter(Boolean);
+      const normalizedColors = colors.length > 0 ? colors : ['Default'];
+      const normalizedSizes = sizes.length > 0 ? sizes : ['One Size'];
+      const inventory = parseInt(newProduct.inventory, 10) || 0;
+      const price = parseFloat(newProduct.price);
+      const compareAtPrice = newProduct.compare ? parseFloat(newProduct.compare) : null;
+      const gallery = [newProduct.image, ...newProduct.images].filter(Boolean);
+      const uniqueGallery = [...new Set(gallery)];
+
+      const nextProduct: Product = {
+        id: productId,
+        slug,
         name: newProduct.title,
+        price,
+        image: uniqueGallery[0] || existing?.image || "https://picsum.photos/seed/new-product/800/1000",
+        inventory,
+        colors: normalizedColors,
+        sizes: normalizedSizes,
         summary: newProduct.summary,
         description: newProduct.desc,
-        details: newProduct.details.split('\n').filter(d => d.trim() !== ''),
-        price: parseFloat(newProduct.price),
         category: newProduct.category,
-        image: newProduct.image || newProduct.images[0] || "https://picsum.photos/seed/new-product/800/1000",
-        images: newProduct.images,
-        colors: ["Navy", "Black"],
-        sizes: ["S", "M", "L"],
-        inventory: parseInt(newProduct.inventory) || 0,
-        isNew: true
+        status: 'active',
+        isFeatured: existing?.isFeatured ?? false,
+        isNew: existing?.isNew ?? true,
+        seoTitle: `${newProduct.title} | theDMAshop`,
+        seoDescription: newProduct.summary || newProduct.desc || undefined,
+        details: newProduct.details.split('\n').filter((detail) => detail.trim() !== ''),
+        images: uniqueGallery.map((url, index) => ({
+          id: existing?.images[index]?.id || crypto.randomUUID(),
+          productId,
+          variantId: null,
+          url,
+          sortOrder: index,
+          altText: newProduct.title,
+        })),
+        variants: normalizedColors.flatMap((color) =>
+          normalizedSizes.map((size, index) => ({
+            id: existing?.variants.find((variant) => variant.color === color && variant.size === size)?.id || crypto.randomUUID(),
+            productId,
+            sku: `${slug}-${color}-${size}`.toUpperCase().replace(/[^A-Z0-9]+/g, '-'),
+            color,
+            size,
+            price,
+            compareAtPrice,
+            inventoryQuantity: inventory,
+            imageUrl: uniqueGallery[index] || uniqueGallery[0] || null,
+            status: 'active' as const,
+          })),
+        ),
       };
-      setProducts([product, ...products]);
-      toast.success("Product added successfully");
-    }
 
-    setIsAddProductOpen(false);
-    setEditingProductId(null);
-    setNewProduct({
-      title: '',
-      summary: '',
-      desc: '',
-      details: '',
-      price: '',
-      compare: '',
-      inventory: '',
-      category: 'Tops',
-      image: '',
-      images: []
-    });
+      await saveProduct(nextProduct);
+      toast.success(editingProductId ? "Product updated successfully" : "Product added successfully");
+      setIsAddProductOpen(false);
+      setEditingProductId(null);
+      setNewProduct({
+        title: '',
+        summary: '',
+        desc: '',
+        details: '',
+        price: '',
+        compare: '',
+        inventory: '',
+        category: 'Tops',
+        colors: 'Default',
+        sizes: 'One Size',
+        image: '',
+        images: []
+      });
+    } catch (error: any) {
+      toast.error(error?.message ?? 'Unable to save product');
+    }
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    setProducts(products.filter(p => p.id !== productId));
-    toast.success("Product deleted successfully");
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      await archiveProduct(productId);
+      toast.success("Product archived successfully");
+    } catch (error: any) {
+      toast.error(error?.message ?? 'Unable to archive product');
+    }
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -229,6 +262,17 @@ export default function AdminProducts() {
                       <option>Outerwear</option>
                       <option>Accessories</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="colors">Colors (comma separated)</Label>
+                    <Input id="colors" placeholder="Navy, Black" className="h-12 rounded-xl bg-secondary/10 border-border/50" value={newProduct.colors} onChange={(e) => setNewProduct({...newProduct, colors: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sizes">Sizes (comma separated)</Label>
+                    <Input id="sizes" placeholder="S, M, L" className="h-12 rounded-xl bg-secondary/10 border-border/50" value={newProduct.sizes} onChange={(e) => setNewProduct({...newProduct, sizes: e.target.value})} />
                   </div>
                 </div>
               </div>

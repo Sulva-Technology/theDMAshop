@@ -68,8 +68,8 @@ export default function AdminAnalytics() {
   const [dateRange, setDateRange] = useState('Last 7 Days');
   const { orders } = useStore();
 
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0) + 33100; // Adding mock base
-  const totalOrders = orders.length + 266; // Adding mock base
+  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+  const totalOrders = orders.length;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">

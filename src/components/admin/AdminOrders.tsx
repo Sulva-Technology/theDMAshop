@@ -126,7 +126,7 @@ export default function AdminOrders() {
                     <input type="checkbox" className="rounded border-border/50 text-primary focus:ring-primary" />
                   </td>
                   <td className="px-6 py-4 font-bold text-foreground cursor-pointer hover:text-primary transition-colors">
-                    {order.id}
+                    {order.orderNumber}
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">{new Date(order.date).toLocaleDateString()}</td>
                   <td className="px-6 py-4">
@@ -140,10 +140,10 @@ export default function AdminOrders() {
                   </td>
                   <td className="px-6 py-4">
                     <Badge variant="outline" className={`border-none ${
-                      order.status === 'Delivered' ? 'bg-green-500/10 text-green-600' : 
-                      order.status === 'Shipped' ? 'bg-purple-500/10 text-purple-600' : 
-                      order.status === 'Processing' ? 'bg-blue-500/10 text-blue-600' :
-                      order.status === 'Cancelled' ? 'bg-red-500/10 text-red-600' :
+                      order.status === 'delivered' ? 'bg-green-500/10 text-green-600' : 
+                      order.status === 'shipped' ? 'bg-purple-500/10 text-purple-600' : 
+                      order.status === 'processing' ? 'bg-blue-500/10 text-blue-600' :
+                      order.status === 'cancelled' ? 'bg-red-500/10 text-red-600' :
                       'bg-secondary text-muted-foreground'
                     }`}>
                       {order.status}
@@ -163,7 +163,7 @@ export default function AdminOrders() {
                             <SheetHeader className="p-6 border-b border-border/50 bg-secondary/10">
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <SheetTitle className="text-2xl font-heading font-bold">{selectedOrder.id}</SheetTitle>
+                                  <SheetTitle className="text-2xl font-heading font-bold">{selectedOrder.orderNumber}</SheetTitle>
                                   <p className="text-sm text-muted-foreground mt-1">{new Date(selectedOrder.date).toLocaleString()}</p>
                                 </div>
                                 <Badge className="rounded-full bg-green-500/10 text-green-600 border-none">Paid</Badge>
@@ -252,29 +252,29 @@ export default function AdminOrders() {
 
                             {/* Quick Actions Footer */}
                             <div className="p-6 border-t border-border/50 bg-background sticky bottom-0 space-y-3">
-                              {selectedOrder.status === 'Processing' && (
+                              {selectedOrder.status === 'processing' && (
                                 <Button 
                                   className="w-full rounded-xl h-12 font-bold premium-shadow-hover gap-2"
-                                  onClick={() => handleUpdateStatus(selectedOrder.id, 'Shipped')}
+                                  onClick={() => handleUpdateStatus(selectedOrder.id, 'shipped')}
                                 >
                                   <Truck className="h-4 w-4" />
                                   Mark as Shipped
                                 </Button>
                               )}
-                              {selectedOrder.status === 'Shipped' && (
+                              {selectedOrder.status === 'shipped' && (
                                 <Button 
                                   className="w-full rounded-xl h-12 font-bold premium-shadow-hover gap-2 bg-green-600 hover:bg-green-700 text-white"
-                                  onClick={() => handleUpdateStatus(selectedOrder.id, 'Delivered')}
+                                  onClick={() => handleUpdateStatus(selectedOrder.id, 'delivered')}
                                 >
                                   <CheckCircle className="h-4 w-4" />
                                   Mark as Delivered
                                 </Button>
                               )}
-                              {selectedOrder.status !== 'Cancelled' && (
+                              {selectedOrder.status !== 'cancelled' && (
                                 <Button 
                                   variant="outline" 
                                   className="w-full rounded-xl h-12 text-destructive hover:text-destructive hover:bg-destructive/10 border-border/50"
-                                  onClick={() => handleUpdateStatus(selectedOrder.id, 'Cancelled')}
+                                  onClick={() => handleUpdateStatus(selectedOrder.id, 'cancelled')}
                                 >
                                   Cancel Order
                                 </Button>

@@ -27,6 +27,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useParams } from 'react-router-dom';
 import { useStore } from '@/lib/store';
 import { toast } from 'sonner';
 
@@ -89,13 +90,14 @@ const RELATED_PRODUCTS = [
 ];
 
 export default function ProductDetails() {
+  const { slug } = useParams();
   const { products, addToCart, wishlist, toggleWishlist, setCurrentPage, cmsContent, selectedProductId, setSelectedProductId } = useStore();
   
   // Find the selected product, fallback to the first product if not found
-  const product = products.find(p => p.id === selectedProductId) || products[0];
+  const product = products.find(p => p.slug === slug) || products.find(p => p.id === selectedProductId) || products[0];
 
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(product?.colors?.[0] || { name: "Default", hex: "#000" });
+  const [selectedColor, setSelectedColor] = useState(product?.colors?.[0] || 'Default');
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
@@ -103,7 +105,7 @@ export default function ProductDetails() {
   // Reset state when product changes
   React.useEffect(() => {
     setSelectedImage(0);
-    setSelectedColor(product?.colors?.[0] || { name: "Default", hex: "#000" });
+    setSelectedColor(product?.colors?.[0] || 'Default');
     setSelectedSize("");
     setQuantity(1);
   }, [product?.id]);

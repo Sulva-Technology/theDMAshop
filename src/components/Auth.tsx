@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Eye, EyeOff, ArrowRight, ChevronLeft } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,9 +18,11 @@ export default function Auth() {
   const [lastName, setLastName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const { login, setCurrentPage } = useStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, signUp, setCurrentPage } = useStore();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password || (!isLogin && (!firstName || !lastName))) {
       toast.error("Please fill in all required fields");
@@ -27,33 +30,24 @@ export default function Auth() {
     }
 
     setIsProcessing(true);
-    // Simulate network request
-    setTimeout(() => {
-      login({
-        id: 'user-1',
-        name: isLogin ? 'Demo User' : `${firstName} ${lastName}`,
-        email: email,
-        role: 'customer'
-      });
+    try {
+      if (isLogin) {
+        await login(email, password);
+      } else {
+        await signUp(`${firstName} ${lastName}`.trim(), email, password);
+      }
+      toast.success(isLogin ? 'Welcome back!' : 'Account created successfully!');
+      const nextRoute = (location.state as { from?: string } | null)?.from || '/account';
+      navigate(nextRoute);
+    } catch (error: any) {
+      toast.error(error?.message ?? 'Authentication failed');
+    } finally {
       setIsProcessing(false);
-      toast.success(isLogin ? "Welcome back!" : "Account created successfully!");
-      setCurrentPage('home');
-    }, 1000);
+    }
   };
 
   const handleGoogleAuth = () => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      login({
-        id: 'user-google',
-        name: 'Google User',
-        email: 'google@example.com',
-        role: 'customer'
-      });
-      setIsProcessing(false);
-      toast.success("Successfully authenticated with Google");
-      setCurrentPage('home');
-    }, 1000);
+    toast.info('Social sign-in is not enabled in this build yet.');
   };
 
   return (

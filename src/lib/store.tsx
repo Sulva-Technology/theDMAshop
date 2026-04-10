@@ -1,32 +1,26 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+import type { Session } from '@supabase/supabase-js';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-// --- Types ---
-export type Product = {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-  image: string; // Main image
-  images?: string[]; // Gallery images
-  isNew: boolean;
-  colors: string[];
-  sizes: string[];
-  inventory: number;
-  summary?: string;
-  description?: string;
-  details?: string[];
-};
+import { SEED_CMS_CONTENT, SEED_PRODUCTS } from '@/lib/seed-data';
+import { fetchCMSContent, saveCMSContent } from '@/lib/services/cms';
+import { submitContactMessage } from '@/lib/services/contact';
+import { fetchAdminCustomers } from '@/lib/services/customers';
+import { fetchAdminOrders, fetchOrdersForCurrentUser, updateOrderFulfillmentStatus } from '@/lib/services/orders';
+import { archiveProduct, fetchProducts, upsertProduct } from '@/lib/services/products';
+import { hasSupabaseConfig, supabase } from '@/lib/supabase';
+import type { CMSContent, CartItem, ContactMessageInput, CustomerSummary, Order, Product, Profile } from '@/lib/types';
 
-export type CartItem = {
-  id: string; // unique id for cart item (product.id + color + size)
-  productId: string;
-  name: string;
-  price: number;
-  image: string;
-  color: string;
-  size: string;
-  quantity: number;
-};
+const CART_STORAGE_KEY = 'thedmashop.cart';
+const WISHLIST_STORAGE_KEY = 'thedmashop.wishlist';
 
 export type User = {
   id: string;
@@ -35,303 +29,495 @@ export type User = {
   role: 'CUSTOMER' | 'ADMIN';
 } | null;
 
-export type Order = {
-  id: string;
-  customerName: string;
-  customerEmail: string;
-  date: string;
-  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
-  total: number;
-  items: CartItem[];
-};
-
-export type Customer = {
-  id: string;
-  name: string;
-  email: string;
-  location: string;
-  orders: number;
-  spent: number;
-  status: 'VIP' | 'Active' | 'New' | 'Guest';
-  lastActive: string;
-};
-
-export type CMSContent = {
-  hero: {
-    title: string;
-    slogan: string;
-    description: string;
-    buttonText: string;
-    buttonLink: string;
-    image: string;
-  };
-  aboutUs: {
-    title: string;
-    content: string;
-    image: string;
-  };
-  footer: {
-    description: string;
-    socialLinks: { platform: string; url: string }[];
-    shopLinks: { label: string; url: string }[];
-    supportLinks: { label: string; url: string }[];
-    copyright: string;
-  };
-  navigation: {
-    links: { label: string; url: string }[];
-    promoText: string;
-  };
-  policies: {
-    title: string;
-    content: string;
-  }[];
-  contactUs: {
-    email: string;
-    phone: string;
-    address: string;
-  };
-  seo: {
-    title: string;
-    description: string;
-  };
-};
-
-// --- Initial Mock Data ---
-const INITIAL_CMS_CONTENT: CMSContent = {
-  hero: {
-    title: "The Spring Collection",
-    slogan: "Elevate Your Everyday",
-    description: "Discover our new arrivals featuring premium fabrics and minimal silhouettes designed for the modern wardrobe.",
-    buttonText: "Shop Collection",
-    buttonLink: "shop",
-    image: "https://picsum.photos/seed/hero-fashion/1920/1080"
-  },
-  aboutUs: {
-    title: "Our Philosophy",
-    content: "At theDMAshop, we believe in the power of minimal design and premium craftsmanship. Our journey started with a simple idea: to create clothing that transcends seasons and trends. We source the finest materials and work with skilled artisans to bring you pieces that are not only beautiful but also built to last.",
-    image: "https://picsum.photos/seed/editorial-fashion/1000/1200"
-  },
-  footer: {
-    description: "Redefining day-to-day luxury through minimal design and premium craftsmanship. Join our journey towards elevated living.",
-    socialLinks: [
-      { platform: "Instagram", url: "#" },
-      { platform: "Twitter", url: "#" },
-      { platform: "Facebook", url: "#" },
-      { platform: "Youtube", url: "#" }
-    ],
-    shopLinks: [
-      { label: "New Arrivals", url: "shop" },
-      { label: "Best Sellers", url: "shop" },
-      { label: "Essentials", url: "shop" },
-      { label: "Outerwear", url: "shop" },
-      { label: "Accessories", url: "shop" }
-    ],
-    supportLinks: [
-      { label: "Shipping Policy", url: "#" },
-      { label: "Returns & Exchanges", url: "#" },
-      { label: "Track Your Order", url: "#" },
-      { label: "Size Guide", url: "#" },
-      { label: "Contact Us", url: "contact" }
-    ],
-    copyright: "© 2026 theDMAshop. All rights reserved."
-  },
-  navigation: {
-    links: [
-      { label: "New Arrivals", url: "shop" },
-      { label: "Shop", url: "shop" },
-      { label: "Collections", url: "shop" },
-      { label: "About", url: "about" }
-    ],
-    promoText: "Free worldwide shipping on orders over $200"
-  },
-  policies: [
-    { title: "Global Shipping", content: "Fast, reliable delivery to over 50 countries worldwide." },
-    { title: "Easy Returns", content: "30-day hassle-free return policy for your peace of mind." },
-    { title: "Secure Shopping", content: "Your data is protected with industry-leading encryption." },
-    { title: "Flexible Payment", content: "Multiple payment options including Apple Pay & Google Pay." }
-  ],
-  contactUs: {
-    email: "support@thedmashop.com",
-    phone: "+1 (555) 123-4567",
-    address: "123 Fashion Ave, New York, NY 10001"
-  },
-  seo: {
-    title: "theDMAshop | Premium Minimalist Fashion",
-    description: "Redefining day-to-day luxury through minimal design and premium craftsmanship. Shop our latest collection of modern essentials."
-  }
-};
-
-const INITIAL_CUSTOMERS: Customer[] = [
-  { id: 'CUS-001', name: 'Emma Thompson', email: 'emma.t@example.com', location: 'New York, NY', orders: 12, spent: 3450.00, status: 'VIP', lastActive: '2 hours ago' },
-  { id: 'CUS-002', name: 'James Wilson', email: 'james.w@example.com', location: 'London, UK', orders: 3, spent: 425.00, status: 'Active', lastActive: '1 day ago' },
-  { id: 'CUS-003', name: 'Sophia Chen', email: 'sophia.c@example.com', location: 'San Francisco, CA', orders: 1, spent: 890.00, status: 'New', lastActive: '3 days ago' },
-  { id: 'CUS-004', name: 'Lucas Garcia', email: 'lucas.g@example.com', location: 'Miami, FL', orders: 0, spent: 0.00, status: 'Guest', lastActive: '1 week ago' },
-  { id: 'CUS-005', name: 'Mia Robinson', email: 'mia.r@example.com', location: 'Chicago, IL', orders: 5, spent: 1240.00, status: 'Active', lastActive: '2 weeks ago' },
-];
-
-const INITIAL_PRODUCTS: Product[] = [
-  {
-    id: '1',
-    name: "Premium Cotton Tee",
-    price: 45.00,
-    category: "Essentials",
-    image: "https://picsum.photos/seed/fashion-1/800/1000",
-    isNew: true,
-    colors: ["Navy", "White", "Black"],
-    sizes: ["S", "M", "L", "XL"],
-    inventory: 100
-  },
-  {
-    id: '2',
-    name: "Wool Blend Overcoat",
-    price: 280.00,
-    category: "Outerwear",
-    image: "https://picsum.photos/seed/fashion-2/800/1000",
-    isNew: false,
-    colors: ["Camel", "Charcoal"],
-    sizes: ["M", "L", "XL"],
-    inventory: 50
-  },
-  {
-    id: '3',
-    name: "Structured Chino Pant",
-    price: 85.00,
-    category: "Bottoms",
-    image: "https://picsum.photos/seed/fashion-3/800/1000",
-    isNew: true,
-    colors: ["Beige", "Navy"],
-    sizes: ["30", "32", "34"],
-    inventory: 75
-  },
-  {
-    id: '4',
-    name: "Merino Wool Sweater",
-    price: 120.00,
-    category: "Essentials",
-    image: "https://picsum.photos/seed/fashion-4/800/1000",
-    isNew: false,
-    colors: ["Forest", "Navy", "Gray"],
-    sizes: ["S", "M", "L"],
-    inventory: 20
-  }
-];
-
-const INITIAL_ORDERS: Order[] = [
-  { id: '#ORD-001', customerName: 'Emma Thompson', customerEmail: 'emma@example.com', date: new Date().toISOString(), status: 'Processing', total: 325.00, items: [] },
-  { id: '#ORD-002', customerName: 'James Wilson', customerEmail: 'james@example.com', date: new Date(Date.now() - 86400000).toISOString(), status: 'Shipped', total: 145.00, items: [] },
-];
-
-// --- Context ---
-interface StoreContextType {
+type StoreContextType = {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
+  saveProduct: (product: Product) => Promise<void>;
+  archiveProduct: (productId: string) => Promise<void>;
+  productsLoading: boolean;
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   updateCartQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
-  wishlist: string[]; // array of product ids
+  wishlist: string[];
   toggleWishlist: (productId: string) => void;
   user: User;
+  profile: Profile | null;
   setUser: React.Dispatch<React.SetStateAction<User>>;
-  login: (userData: User) => void;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<void>;
+  signUp: (fullName: string, email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  authLoading: boolean;
   orders: Order[];
   setOrders: React.Dispatch<React.SetStateAction<Order[]>>;
   addOrder: (order: Order) => void;
-  updateOrderStatus: (orderId: string, status: Order['status']) => void;
-  customers: Customer[];
-  setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
+  updateOrderStatus: (orderId: string, status: Order['fulfillmentStatus']) => Promise<void>;
+  ordersLoading: boolean;
+  customers: CustomerSummary[];
+  setCustomers: React.Dispatch<React.SetStateAction<CustomerSummary[]>>;
+  customersLoading: boolean;
   cmsContent: CMSContent;
   setCmsContent: React.Dispatch<React.SetStateAction<CMSContent>>;
+  saveCmsContent: (content: CMSContent) => Promise<void>;
+  contentLoading: boolean;
   currentPage: string;
   setCurrentPage: (page: string) => void;
   selectedProductId: string | null;
-  setSelectedProductId: (id: string | null) => void;
-}
+  setSelectedProductId: React.Dispatch<React.SetStateAction<string | null>>;
+  refreshAll: () => Promise<void>;
+  submitContact: (payload: ContactMessageInput) => Promise<void>;
+};
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
+function mapProfileToUser(profile: Profile | null): User {
+  if (!profile) {
+    return null;
+  }
+
+  return {
+    id: profile.id,
+    name: profile.fullName,
+    email: profile.email,
+    role: profile.role === 'admin' ? 'ADMIN' : 'CUSTOMER',
+  };
+}
+
+function getRouteFromPage(page: string) {
+  if (page.startsWith('/')) {
+    return page;
+  }
+
+  switch (page) {
+    case 'home':
+      return '/';
+    case 'shop':
+      return '/shop';
+    case 'checkout':
+      return '/checkout';
+    case 'about':
+      return '/about';
+    case 'contact':
+      return '/contact';
+    case 'auth':
+      return '/auth';
+    case 'admin':
+      return '/admin';
+    case 'details':
+      return '/shop';
+    default:
+      return '/';
+  }
+}
+
+function getPageFromPath(pathname: string) {
+  if (pathname === '/') return 'home';
+  if (pathname.startsWith('/shop')) return 'shop';
+  if (pathname.startsWith('/products')) return 'details';
+  if (pathname.startsWith('/checkout')) return 'checkout';
+  if (pathname.startsWith('/about')) return 'about';
+  if (pathname.startsWith('/contact')) return 'contact';
+  if (pathname.startsWith('/auth')) return 'auth';
+  if (pathname.startsWith('/admin')) return 'admin';
+  return 'home';
+}
+
+function loadStoredJson<T>(key: string, fallback: T): T {
+  if (typeof window === 'undefined') {
+    return fallback;
+  }
+
+  const raw = window.localStorage.getItem(key);
+  if (!raw) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+async function fetchProfile(userId: string): Promise<Profile | null> {
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, role, phone, default_address, created_at, updated_at')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    id: data.id,
+    email: data.email,
+    fullName: data.full_name,
+    role: data.role,
+    phone: data.phone ?? undefined,
+    defaultAddress: data.default_address ?? null,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
+}
+
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<string[]>([]);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [products, setProducts] = useState<Product[]>(SEED_PRODUCTS);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [cart, setCart] = useState<CartItem[]>(() => loadStoredJson(CART_STORAGE_KEY, [] as CartItem[]));
+  const [wishlist, setWishlist] = useState<string[]>(() => loadStoredJson(WISHLIST_STORAGE_KEY, [] as string[]));
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [user, setUser] = useState<User>(null);
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
-  const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
-  const [cmsContent, setCmsContent] = useState<CMSContent>(INITIAL_CMS_CONTENT);
-  const [currentPage, setCurrentPage] = useState('home');
+  const [authLoading, setAuthLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [customers, setCustomers] = useState<CustomerSummary[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(true);
+  const [cmsContent, setCmsContent] = useState<CMSContent>(SEED_CMS_CONTENT);
+  const [contentLoading, setContentLoading] = useState(true);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
-  const addToCart = (item: CartItem) => {
-    setCart(prev => {
-      const existing = prev.find(i => i.id === item.id);
+  useEffect(() => {
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+    window.localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  const refreshProducts = useCallback(async () => {
+    setProductsLoading(true);
+    try {
+      setProducts(await fetchProducts(Boolean(profile && profile.role === 'admin')));
+    } finally {
+      setProductsLoading(false);
+    }
+  }, [profile]);
+
+  const refreshCMS = useCallback(async () => {
+    setContentLoading(true);
+    try {
+      setCmsContent(await fetchCMSContent());
+    } finally {
+      setContentLoading(false);
+    }
+  }, []);
+
+  const refreshOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    try {
+      if (profile?.role === 'admin') {
+        setOrders(await fetchAdminOrders());
+      } else {
+        setOrders(await fetchOrdersForCurrentUser(profile?.id));
+      }
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, [profile]);
+
+  const refreshCustomers = useCallback(async () => {
+    if (profile?.role !== 'admin') {
+      setCustomers([]);
+      setCustomersLoading(false);
+      return;
+    }
+
+    setCustomersLoading(true);
+    try {
+      setCustomers(await fetchAdminCustomers());
+    } finally {
+      setCustomersLoading(false);
+    }
+  }, [profile]);
+
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refreshProducts(), refreshCMS(), refreshOrders(), refreshCustomers()]);
+  }, [refreshProducts, refreshCMS, refreshOrders, refreshCustomers]);
+
+  useEffect(() => {
+    refreshProducts();
+    refreshCMS();
+  }, [refreshProducts, refreshCMS]);
+
+  useEffect(() => {
+    refreshOrders();
+    refreshCustomers();
+  }, [refreshOrders, refreshCustomers]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function initializeAuth() {
+      if (!hasSupabaseConfig || !supabase) {
+        setAuthLoading(false);
+        return;
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!active) {
+        return;
+      }
+
+      if (session?.user) {
+        const nextProfile = await fetchProfile(session.user.id);
+        if (!active) {
+          return;
+        }
+        setProfile(nextProfile);
+        setUser(mapProfileToUser(nextProfile));
+      }
+
+      setAuthLoading(false);
+    }
+
+    initializeAuth();
+
+    const subscription = supabase?.auth.onAuthStateChange(async (_event, session: Session | null) => {
+      if (!session?.user) {
+        setProfile(null);
+        setUser(null);
+        return;
+      }
+
+      const nextProfile = await fetchProfile(session.user.id);
+      setProfile(nextProfile);
+      setUser(mapProfileToUser(nextProfile));
+    });
+
+    return () => {
+      active = false;
+      subscription?.data.subscription.unsubscribe();
+    };
+  }, []);
+
+  const addToCart = useCallback((item: CartItem) => {
+    setCart((prev) => {
+      const existing = prev.find((cartItem) => cartItem.id === item.id);
       if (existing) {
-        return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i);
+        return prev.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + item.quantity }
+            : cartItem,
+        );
       }
       return [...prev, item];
     });
-  };
+  }, []);
 
-  const removeFromCart = (id: string) => {
-    setCart(prev => prev.filter(i => i.id !== id));
-  };
+  const removeFromCart = useCallback((id: string) => {
+    setCart((prev) => prev.filter((item) => item.id !== id));
+  }, []);
 
-  const updateCartQuantity = (id: string, quantity: number) => {
+  const updateCartQuantity = useCallback((id: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(id);
+      setCart((prev) => prev.filter((item) => item.id !== id));
       return;
     }
-    setCart(prev => prev.map(i => i.id === id ? { ...i, quantity } : i));
-  };
 
-  const clearCart = () => setCart([]);
+    setCart((prev) => prev.map((item) => (item.id === id ? { ...item, quantity } : item)));
+  }, []);
 
-  const toggleWishlist = (productId: string) => {
-    setWishlist(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
-  };
+  const clearCart = useCallback(() => setCart([]), []);
 
-  const addOrder = (order: Order) => {
-    setOrders(prev => [order, ...prev]);
-  };
+  const toggleWishlist = useCallback((productId: string) => {
+    setWishlist((prev) => (prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]));
+  }, []);
 
-  const updateOrderStatus = (orderId: string, status: Order['status']) => {
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
-  };
+  const login = useCallback(async (email: string, password: string) => {
+    if (!supabase) {
+      throw new Error('Supabase auth is not configured.');
+    }
 
-  const login = (userData: User) => {
-    setUser(userData);
-  };
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      throw error;
+    }
+  }, []);
 
-  const logout = () => {
+  const signUp = useCallback(async (fullName: string, email: string, password: string) => {
+    if (!supabase) {
+      throw new Error('Supabase auth is not configured.');
+    }
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    if (!supabase) {
+      setProfile(null);
+      setUser(null);
+      return;
+    }
+
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      throw error;
+    }
+
+    setProfile(null);
     setUser(null);
-  };
+  }, []);
 
-  return (
-    <StoreContext.Provider value={{
-      products, setProducts,
-      cart, addToCart, removeFromCart, updateCartQuantity, clearCart,
-      wishlist, toggleWishlist,
-      user, setUser, login, logout,
-      orders, setOrders, addOrder, updateOrderStatus,
-      customers, setCustomers,
-      cmsContent, setCmsContent,
-      currentPage, setCurrentPage,
-      selectedProductId, setSelectedProductId
-    }}>
-      {children}
-    </StoreContext.Provider>
+  const addOrder = useCallback((order: Order) => {
+    setOrders((prev) => [order, ...prev]);
+  }, []);
+
+  const updateOrderStatus = useCallback(async (orderId: string, status: Order['fulfillmentStatus']) => {
+    await updateOrderFulfillmentStatus(orderId, status);
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === orderId ? { ...order, status, fulfillmentStatus: status } : order,
+      ),
+    );
+  }, []);
+
+  const saveProduct = useCallback(async (product: Product) => {
+    const saved = await upsertProduct(product);
+    setProducts((prev) => {
+      const exists = prev.some((item) => item.id === saved.id);
+      return exists ? prev.map((item) => (item.id === saved.id ? saved : item)) : [saved, ...prev];
+    });
+  }, []);
+
+  const archiveProductById = useCallback(async (productId: string) => {
+    await archiveProduct(productId);
+    setProducts((prev) => prev.filter((product) => product.id !== productId));
+  }, []);
+
+  const saveCms = useCallback(async (content: CMSContent) => {
+    const saved = await saveCMSContent(content);
+    setCmsContent(saved);
+  }, []);
+
+  const setCurrentPage = useCallback(
+    (page: string) => {
+      if (page === 'details' && selectedProductId) {
+        const selectedProduct = products.find((product) => product.id === selectedProductId);
+        if (selectedProduct) {
+          navigate(`/products/${selectedProduct.slug}`);
+          return;
+        }
+      }
+
+      navigate(getRouteFromPage(page));
+    },
+    [navigate, products, selectedProductId],
   );
+
+  const submitContact = useCallback(async (payload: ContactMessageInput) => {
+    await submitContactMessage(payload);
+  }, []);
+
+  const value = useMemo<StoreContextType>(
+    () => ({
+      products,
+      setProducts,
+      saveProduct,
+      archiveProduct: archiveProductById,
+      productsLoading,
+      cart,
+      addToCart,
+      removeFromCart,
+      updateCartQuantity,
+      clearCart,
+      wishlist,
+      toggleWishlist,
+      user,
+      profile,
+      setUser,
+      login,
+      signUp,
+      logout,
+      authLoading,
+      orders,
+      setOrders,
+      addOrder,
+      updateOrderStatus,
+      ordersLoading,
+      customers,
+      setCustomers,
+      customersLoading,
+      cmsContent,
+      setCmsContent,
+      saveCmsContent: saveCms,
+      contentLoading,
+      currentPage: getPageFromPath(location.pathname),
+      setCurrentPage,
+      selectedProductId,
+      setSelectedProductId,
+      refreshAll,
+      submitContact,
+    }),
+    [
+      products,
+      saveProduct,
+      archiveProductById,
+      productsLoading,
+      cart,
+      addToCart,
+      removeFromCart,
+      updateCartQuantity,
+      clearCart,
+      wishlist,
+      toggleWishlist,
+      user,
+      profile,
+      login,
+      signUp,
+      logout,
+      authLoading,
+      orders,
+      addOrder,
+      updateOrderStatus,
+      ordersLoading,
+      customers,
+      customersLoading,
+      cmsContent,
+      saveCms,
+      contentLoading,
+      location.pathname,
+      setCurrentPage,
+      selectedProductId,
+      refreshAll,
+      submitContact,
+    ],
+  );
+
+  return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 
 export function useStore() {
   const context = useContext(StoreContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useStore must be used within a StoreProvider');
   }
+
   return context;
 }
+
+export type { CMSContent, CartItem, CustomerSummary, Order, Product, Profile };

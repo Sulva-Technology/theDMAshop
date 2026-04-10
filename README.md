@@ -1,20 +1,36 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# theDMAshop
 
-# Run and deploy your AI Studio app
+Dynamic single-store commerce app built with React, Vite, Supabase, and Stripe.
 
-This contains everything you need to run your app locally.
+## Stack
 
-View your app in AI Studio: https://ai.studio/apps/28f5de0f-8acb-4c91-92e1-1f0a80cbd41c
+- Storefront: React 19 + Vite + Tailwind
+- Backend: Supabase Auth, Postgres, Storage
+- Payments: Stripe Checkout + Stripe webhook confirmation
+- Admin: product, order, customer, and CMS management
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
+## Local Setup
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Copy `.env.example` to `.env.local` and set the required keys.
+3. Apply [supabase/migrations/001_initial_storefront.sql](/C:/sulvatech/thedmashop/supabase/migrations/001_initial_storefront.sql) to your Supabase project.
+4. Run the frontend:
    `npm run dev`
+
+## Required Environment Variables
+
+- `APP_URL`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `STRIPE_PUBLIC_KEY`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+
+## Payments
+
+- Frontend checkout posts to `api/checkout-session.ts`
+- Stripe redirects back to `/checkout/success`
+- `api/stripe-webhook.ts` confirms payment and decrements inventory

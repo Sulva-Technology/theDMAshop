@@ -12,16 +12,34 @@ import { useStore } from '@/lib/store';
 export default function ContactUs() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { cmsContent } = useStore();
+  const { cmsContent, submitContact } = useStore();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [orderNumber, setOrderNumber] = useState('');
+  const [message, setMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await submitContact({
+        firstName,
+        lastName,
+        email,
+        orderNumber: orderNumber || undefined,
+        message,
+      });
       setIsSubmitting(false);
       setIsSubmitted(true);
-    }, 1500);
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setOrderNumber('');
+      setMessage('');
+    } catch {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -89,22 +107,22 @@ export default function ContactUs() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="firstName">First Name</Label>
-                        <Input id="firstName" required className="h-12 rounded-xl bg-background border-border/50 focus-visible:ring-primary" placeholder="Jane" />
+                        <Input id="firstName" required className="h-12 rounded-xl bg-background border-border/50 focus-visible:ring-primary" placeholder="Jane" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="lastName">Last Name</Label>
-                        <Input id="lastName" required className="h-12 rounded-xl bg-background border-border/50 focus-visible:ring-primary" placeholder="Doe" />
+                        <Input id="lastName" required className="h-12 rounded-xl bg-background border-border/50 focus-visible:ring-primary" placeholder="Doe" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                       </div>
                     </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="email">Email Address</Label>
-                      <Input id="email" type="email" required className="h-12 rounded-xl bg-background border-border/50 focus-visible:ring-primary" placeholder="jane@example.com" />
+                      <Input id="email" type="email" required className="h-12 rounded-xl bg-background border-border/50 focus-visible:ring-primary" placeholder="jane@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                     </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="orderNumber">Order Number (Optional)</Label>
-                      <Input id="orderNumber" className="h-12 rounded-xl bg-background border-border/50 focus-visible:ring-primary" placeholder="#DMA-12345" />
+                      <Input id="orderNumber" className="h-12 rounded-xl bg-background border-border/50 focus-visible:ring-primary" placeholder="#DMA-12345" value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} />
                     </div>
                     
                     <div className="space-y-2">
@@ -114,6 +132,8 @@ export default function ContactUs() {
                         required 
                         className="w-full min-h-[150px] p-4 rounded-xl bg-background border border-border/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary resize-y"
                         placeholder="How can we help you today?"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
                       />
                     </div>
                     
