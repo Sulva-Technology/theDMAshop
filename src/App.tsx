@@ -7,6 +7,7 @@ import Checkout from '@/components/Checkout';
 import ContactUs from '@/components/ContactUs';
 import Home from '@/components/Home';
 import InfoPage from '@/components/InfoPage';
+import NotFound from '@/components/NotFound';
 import ProductDetails from '@/components/ProductDetails';
 import Shop from '@/components/Shop';
 import { Seo } from '@/components/Seo';
@@ -109,7 +110,7 @@ function RoutedApp() {
             <Route path="/admin/content" element={<AdminDashboard />} />
             <Route path="/admin/analytics" element={<AdminDashboard />} />
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
       <Toaster position="top-center" />

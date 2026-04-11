@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page Not Found | theDMAshop</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7fb;
+        --panel: rgba(255, 255, 255, 0.88);
+        --text: #12263f;
+        --muted: #596575;
+        --border: rgba(18, 38, 63, 0.1);
+        --primary: #10253f;
+        --accent: #dfe7f1;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, Arial, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(16, 37, 63, 0.16), transparent 30%),
+          radial-gradient(circle at bottom right, rgba(199, 212, 228, 0.85), transparent 28%),
+          var(--bg);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .shell {
+        width: min(1040px, 100%);
+        border: 1px solid var(--border);
+        background: var(--panel);
+        backdrop-filter: blur(12px);
+        border-radius: 32px;
+        box-shadow: 0 30px 80px rgba(16, 37, 63, 0.12);
+        padding: 32px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 32px;
+      }
+
+      @media (min-width: 900px) {
+        .grid {
+          grid-template-columns: 1.5fr 0.9fr;
+          align-items: end;
+        }
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--border);
+        background: rgba(223, 231, 241, 0.6);
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--primary);
+      }
+
+      h1 {
+        font-size: clamp(2.6rem, 6vw, 4.7rem);
+        line-height: 0.96;
+        margin: 18px 0 16px;
+      }
+
+      .code {
+        font-size: clamp(4rem, 11vw, 7rem);
+        line-height: 0.9;
+        margin: 20px 0 0;
+        font-weight: 800;
+        letter-spacing: -0.06em;
+        color: rgba(16, 37, 63, 0.82);
+      }
+
+      p {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.7;
+        color: var(--muted);
+        max-width: 42rem;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 50px;
+        padding: 0 22px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 700;
+        border: 1px solid transparent;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: #fff;
+        box-shadow: 0 16px 30px rgba(16, 37, 63, 0.18);
+      }
+
+      .btn-secondary {
+        background: white;
+        color: var(--primary);
+        border-color: var(--border);
+      }
+
+      .card {
+        display: grid;
+        gap: 18px;
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        background: rgba(223, 231, 241, 0.4);
+        padding: 24px;
+      }
+
+      .label {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--primary);
+      }
+
+      .small {
+        font-size: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <div class="grid">
+        <section>
+          <div class="eyebrow">404 Error</div>
+          <div class="code">404</div>
+          <h1>This page slipped off the rack.</h1>
+          <p>
+            The URL may be outdated, mistyped, or not yet routed through the storefront. You can go back home,
+            open the shop, or use the correct sign-in path for account and admin access.
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" href="/">Back Home</a>
+            <a class="btn btn-secondary" href="/shop">Browse Shop</a>
+            <a class="btn btn-secondary" href="/auth">Admin / Account Login</a>
+          </div>
+        </section>
+
+        <aside class="card">
+          <div>
+            <div class="label">Admin tip</div>
+            <p class="small">Use <strong>/auth</strong> to sign in, then continue to <strong>/admin</strong> after authentication.</p>
+          </div>
+          <div>
+            <div class="label">Deployment tip</div>
+            <p class="small">If this appears on a valid route, redeploy after confirming SPA rewrites are enabled so requests resolve to the app entry.</p>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </body>
+  </html>
