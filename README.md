@@ -17,9 +17,9 @@ Dynamic single-store commerce app built with React, Vite, Supabase, and Stripe.
 3. Apply [supabase/migrations/001_initial_storefront.sql](/C:/sulvatech/thedmashop/supabase/migrations/001_initial_storefront.sql) to your Supabase project.
 4. Seed required CMS content:
    `npm run seed:cms`
-5. Promote your first admin user after that user signs up:
+5. Create or promote your first admin user:
    `npm run promote:admin`
-4. Run the frontend:
+6. Run the frontend:
    `npm run dev`
 
 ## Required Environment Variables
@@ -30,6 +30,8 @@ Dynamic single-store commerce app built with React, Vite, Supabase, and Stripe.
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `ADMIN_BOOTSTRAP_EMAIL`
+- `ADMIN_BOOTSTRAP_PASSWORD`
+- `ADMIN_BOOTSTRAP_NAME`
 - `STRIPE_PUBLIC_KEY`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
@@ -39,8 +41,7 @@ Dynamic single-store commerce app built with React, Vite, Supabase, and Stripe.
 1. Set all env vars, including `ADMIN_BOOTSTRAP_EMAIL`.
 2. Run the Supabase migration.
 3. Run `npm run seed:cms` to create required storefront CMS rows if they are missing.
-4. Sign up the first real admin user through the app.
-5. Run `npm run promote:admin` to grant that user the `admin` role.
+4. Run `npm run promote:admin` to create or promote the first admin user.
 6. Configure the Stripe webhook to target `api/stripe-webhook.ts`.
 7. Verify the `product-media` bucket is public and can serve catalog images.
 

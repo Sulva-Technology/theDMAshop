@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Eye, EyeOff, ArrowRight, ChevronLeft } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Seo } from '@/components/Seo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,6 +53,12 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-background flex font-sans">
+      <Seo
+        title={isLogin ? 'Sign In | theDMAshop' : 'Create Account | theDMAshop'}
+        description="Sign in or create your theDMAshop account to manage orders, save favorites, and check out faster."
+        canonicalPath="/auth"
+        noindex
+      />
       {/* Left Column: Image (Desktop Only) */}
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden bg-secondary">
         <img 
@@ -193,7 +200,7 @@ export default function Auth() {
                 <div className="flex items-start space-x-3 pt-2">
                   <Checkbox id="terms" className="mt-1" />
                   <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed font-normal">
-                    By creating an account, you agree to our <a href="#" className="text-primary hover:underline">Terms of Service</a> and <a href="#" className="text-primary hover:underline">Privacy Policy</a>.
+                    By creating an account, you agree to our <a href="/terms-of-service" className="text-primary hover:underline">Terms of Service</a> and <a href="/privacy-policy" className="text-primary hover:underline">Privacy Policy</a>.
                   </Label>
                 </div>
               )}

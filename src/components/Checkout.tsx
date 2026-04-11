@@ -19,6 +19,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useLocation } from 'react-router-dom';
+import { Seo } from '@/components/Seo';
 import { useStore } from '@/lib/store';
 import { toast } from 'sonner';
 
@@ -185,8 +186,14 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row font-sans">
-      
-      {/* Mobile Order Summary Toggle */}
+      <Seo
+        title={isSuccessRoute ? 'Order Confirmed | theDMAshop' : 'Checkout | theDMAshop'}
+        description={isSuccessRoute ? 'Your theDMAshop order has been confirmed.' : 'Complete your secure checkout with theDMAshop.'}
+        canonicalPath={isSuccessRoute ? '/checkout/success' : '/checkout'}
+        noindex
+      />
+        
+        {/* Mobile Order Summary Toggle */}
       <div className="lg:hidden bg-secondary/20 border-b border-border/50 sticky top-0 z-40">
         <button 
           onClick={() => setIsOrderSummaryOpen(!isOrderSummaryOpen)}
@@ -448,9 +455,9 @@ export default function Checkout() {
           {/* Footer Links */}
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground pt-8 border-t border-border/50">
             <a href="#" className="hover:text-primary transition-colors">Refund policy</a>
-            <a href="#" className="hover:text-primary transition-colors">Shipping policy</a>
-            <a href="#" className="hover:text-primary transition-colors">Privacy policy</a>
-            <a href="#" className="hover:text-primary transition-colors">Terms of service</a>
+              <a href="/shipping-policy" className="hover:text-primary transition-colors">Shipping policy</a>
+              <a href="/privacy-policy" className="hover:text-primary transition-colors">Privacy policy</a>
+              <a href="/terms-of-service" className="hover:text-primary transition-colors">Terms of service</a>
           </div>
         </div>
       </div>

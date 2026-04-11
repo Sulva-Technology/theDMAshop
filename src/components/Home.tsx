@@ -6,14 +6,47 @@ import { FeaturedProducts } from '@/components/home/FeaturedProducts';
 import { Categories } from '@/components/home/Categories';
 import { BrandStory } from '@/components/home/BrandStory';
 import { Policies } from '@/components/home/Policies';
+import { Seo } from '@/components/Seo';
 import { motion } from 'motion/react';
 import { useStore } from '@/lib/store';
+import { buildBreadcrumbList } from '@/lib/seo';
 
 export default function Home() {
-  const { productsLoading, productsError, contentLoading, contentError } = useStore();
+  const { productsLoading, productsError, contentLoading, contentError, cmsContent } = useStore();
+
+  const homepageSchema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://thedmashop.com/#organization',
+        name: 'theDMAshop',
+        url: 'https://thedmashop.com/',
+        email: cmsContent.contactUs.email,
+        telephone: cmsContent.contactUs.phone,
+        sameAs: cmsContent.footer.socialLinks.map((link) => link.url).filter(Boolean),
+      },
+      {
+        '@type': 'WebSite',
+        '@id': 'https://thedmashop.com/#website',
+        name: 'theDMAshop',
+        url: 'https://thedmashop.com/',
+        description: cmsContent.seo.description,
+      },
+      buildBreadcrumbList([{ name: 'Home', path: '/' }]),
+    ],
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Seo
+        title={cmsContent.seo.title || 'theDMAshop | Premium Minimal Essentials'}
+        description={cmsContent.seo.description || 'Shop premium minimalist clothing and elevated everyday essentials at theDMAshop.'}
+        image={cmsContent.hero.image}
+        canonicalPath="/"
+        keywords={['theDMAshop', 'premium fashion', 'minimal wardrobe', 'modern essentials', 'online clothing store']}
+        jsonLd={homepageSchema}
+      />
       <Navbar />
       
       <main className="flex-grow">

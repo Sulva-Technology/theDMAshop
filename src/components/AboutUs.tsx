@@ -2,14 +2,37 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { Seo } from '@/components/Seo';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ShieldCheck, Leaf, Heart, Sparkles } from 'lucide-react';
 import { useStore } from '@/lib/store';
+import { buildBreadcrumbList } from '@/lib/seo';
 
 export default function AboutUs() {
   const { setCurrentPage, cmsContent } = useStore();
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans">
+      <Seo
+        title={`About theDMAshop | Premium Minimal Fashion`}
+        description={cmsContent.aboutUs.content.slice(0, 155)}
+        image={cmsContent.aboutUs.image}
+        canonicalPath="/about"
+        keywords={['about theDMAshop', 'brand story', 'premium fashion brand', 'minimalist clothing company']}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'AboutPage',
+              name: 'About theDMAshop',
+              description: cmsContent.aboutUs.content,
+            },
+            buildBreadcrumbList([
+              { name: 'Home', path: '/' },
+              { name: 'About', path: '/about' },
+            ]),
+          ],
+        }}
+      />
       <Navbar />
 
       <main className="flex-grow">

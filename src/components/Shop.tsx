@@ -12,6 +12,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { Seo } from '@/components/Seo';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,7 @@ import {
   getDefaultVariant,
   getPriceRange,
 } from '@/lib/product-helpers';
+import { buildBreadcrumbList } from '@/lib/seo';
 import type { Product } from '@/lib/types';
 import { toast } from 'sonner';
 
@@ -220,6 +222,30 @@ export default function Shop() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <Seo
+        title={isWishlistView ? 'Your Wishlist | theDMAshop' : 'Shop Premium Clothing | theDMAshop'}
+        description={isWishlistView
+          ? 'Review saved favorites and return to premium wardrobe essentials you want to shop next.'
+          : 'Browse premium clothing, elevated basics, outerwear, and modern essentials from theDMAshop.'}
+        canonicalPath="/shop"
+        keywords={['shop clothing online', 'premium apparel', 'minimal fashion', 'wardrobe essentials', 'thedmashop products']}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'CollectionPage',
+              name: isWishlistView ? 'Your Wishlist' : 'Shop All',
+              description: isWishlistView
+                ? 'Saved products and favorites from theDMAshop.'
+                : 'Browse theDMAshop live catalog of premium fashion products.',
+            },
+            buildBreadcrumbList([
+              { name: 'Home', path: '/' },
+              { name: 'Shop', path: '/shop' },
+            ]),
+          ],
+        }}
+      />
       <Navbar />
 
       <main className="flex-grow max-w-7xl mx-auto w-full px-6 py-12">

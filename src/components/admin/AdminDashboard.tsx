@@ -19,6 +19,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Seo } from '@/components/Seo';
 import { Separator } from '@/components/ui/separator';
 import { useStore } from '@/lib/store';
 
@@ -63,6 +64,12 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-secondary/10 flex font-sans">
+      <Seo
+        title="Admin Dashboard | theDMAshop"
+        description="Internal theDMAshop administration dashboard."
+        canonicalPath="/admin"
+        noindex
+      />
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border/50 transform transition-transform duration-300 lg:translate-x-0 lg:static lg:block ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full flex flex-col">
           <div className="h-20 flex items-center px-8 border-b border-border/50">

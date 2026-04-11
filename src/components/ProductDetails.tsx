@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { Seo } from '@/components/Seo';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useStore } from '@/lib/store';
 import { buildCartItem, findVariant, getDefaultVariant, getProductGallery, getProductPrimaryImage } from '@/lib/product-helpers';
+import { absoluteUrl, buildBreadcrumbList } from '@/lib/seo';
 
 export default function ProductDetails() {
   const { slug } = useParams();
@@ -70,6 +72,12 @@ export default function ProductDetails() {
   if (productsError) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
+        <Seo
+          title="Catalog Unavailable | theDMAshop"
+          description="The product catalog is temporarily unavailable."
+          canonicalPath={slug ? `/products/${slug}` : '/shop'}
+          noindex
+        />
         <Navbar />
         <main className="flex-grow max-w-7xl mx-auto w-full px-6 py-20">
           <div className="rounded-3xl border border-amber-500/20 bg-amber-500/5 p-10 text-center space-y-3">
@@ -85,6 +93,12 @@ export default function ProductDetails() {
   if (!product || product.status !== 'active' || product.variants.every((variant) => variant.status !== 'active')) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
+        <Seo
+          title="Product Not Available | theDMAshop"
+          description="This product is unavailable or no longer published."
+          canonicalPath={slug ? `/products/${slug}` : '/shop'}
+          noindex
+        />
         <Navbar />
         <main className="flex-grow max-w-5xl mx-auto w-full px-6 py-20">
           <div className="rounded-3xl border border-border/50 bg-secondary/10 p-10 text-center space-y-4">
@@ -107,6 +121,45 @@ export default function ProductDetails() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <Seo
+        title={product.seoTitle || `${product.name} | theDMAshop`}
+        description={product.seoDescription || product.summary || product.description || `Shop ${product.name} at theDMAshop.`}
+        image={gallery[0]?.url || product.image}
+        canonicalPath={`/products/${product.slug}`}
+        type="product"
+        keywords={[product.name, product.category, ...product.colors, ...product.sizes, 'theDMAshop']}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'Product',
+              name: product.name,
+              description: product.description || product.summary || '',
+              image: gallery.map((item) => absoluteUrl(item.url)).slice(0, 8),
+              sku: selectedVariant?.sku || defaultVariant?.sku,
+              brand: {
+                '@type': 'Brand',
+                name: 'theDMAshop',
+              },
+              offers: {
+                '@type': 'Offer',
+                priceCurrency: 'USD',
+                price: selectedVariant?.price ?? product.price,
+                availability:
+                  (selectedVariant?.inventoryQuantity ?? 0) > 0
+                    ? 'https://schema.org/InStock'
+                    : 'https://schema.org/OutOfStock',
+                url: absoluteUrl(`/products/${product.slug}`),
+              },
+            },
+            buildBreadcrumbList([
+              { name: 'Home', path: '/' },
+              { name: 'Shop', path: '/shop' },
+              { name: product.name, path: `/products/${product.slug}` },
+            ]),
+          ],
+        }}
+      />
       <Navbar />
 
       <main className="flex-grow max-w-7xl mx-auto w-full px-6 py-12">
