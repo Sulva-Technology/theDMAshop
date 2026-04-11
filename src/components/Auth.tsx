@@ -32,14 +32,19 @@ export default function Auth() {
 
     setIsProcessing(true);
     try {
+      let userObj;
       if (isLogin) {
-        await login(email, password);
+        userObj = await login(email, password);
       } else {
-        await signUp(`${firstName} ${lastName}`.trim(), email, password);
+        userObj = await signUp(`${firstName} ${lastName}`.trim(), email, password);
       }
       toast.success(isLogin ? 'Welcome back!' : 'Account created successfully!');
-      const nextRoute = (location.state as { from?: string } | null)?.from || '/account';
-      navigate(nextRoute);
+
+      let nextRoute = (location.state as { from?: string } | null)?.from;
+      if (!nextRoute) {
+        nextRoute = userObj?.role === 'ADMIN' ? '/admin' : '/account';
+      }
+      navigate(nextRoute, { replace: true });
     } catch (error: any) {
       toast.error(error?.message ?? 'Authentication failed');
     } finally {
@@ -255,3 +260,4 @@ function GoogleIcon(props: any) {
     </svg>
   )
 }
+
