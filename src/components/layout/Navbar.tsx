@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ShoppingCart, User, Menu, X, Heart, LogOut, LayoutDashboard } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'motion/react';
 import { CartDrawer } from '@/components/cart/CartDrawer';
@@ -16,9 +17,12 @@ import {
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { cart, user, logout, setCurrentPage, cmsContent } = useStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { cart, user, logout, setCurrentPage, cmsContent, wishlist } = useStore();
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const wishlistCount = wishlist.length;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +31,23 @@ export function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const openSearch = () => {
+    if (location.pathname !== '/shop') {
+      navigate('/shop?focus=search');
+      return;
+    }
+
+    navigate('/shop?focus=search');
+  };
+
+  const openWishlist = () => {
+    navigate('/shop?wishlist=1');
+  };
+
+  const openAccount = () => {
+    navigate(user ? '/account' : '/auth');
+  };
 
   return (
     <>
@@ -57,7 +78,7 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" size="icon" className="rounded-full hidden sm:flex">
+            <Button variant="ghost" size="icon" className="rounded-full hidden sm:flex" onClick={openSearch}>
               <Search className="h-5 w-5" />
             </Button>
             
@@ -82,7 +103,7 @@ export function Navbar() {
                       <span>Admin Dashboard</span>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => setCurrentPage('/account')}>
+                  <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={openAccount}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
@@ -99,8 +120,13 @@ export function Navbar() {
               </Button>
             )}
 
-            <Button variant="ghost" size="icon" className="rounded-full">
+            <Button variant="ghost" size="icon" className="rounded-full relative" onClick={openWishlist}>
               <Heart className="h-5 w-5" />
+              {wishlistCount > 0 && (
+                <span className="absolute top-1 right-1 h-4 min-w-4 px-1 bg-primary text-white text-[10px] flex items-center justify-center rounded-full">
+                  {wishlistCount}
+                </span>
+              )}
             </Button>
             <CartDrawer>
               <Button variant="ghost" size="icon" className="rounded-full relative">
@@ -144,9 +170,20 @@ export function Navbar() {
                   <Button className="w-full rounded-full py-6 text-lg" onClick={() => { setIsMobileMenuOpen(false); setCurrentPage('auth'); }}>Sign In</Button>
                 )}
                 <div className="flex justify-center gap-8 text-muted-foreground">
-                  <Search className="h-6 w-6" />
-                  <User className="h-6 w-6" />
-                  <Heart className="h-6 w-6" />
+                  <button onClick={() => { setIsMobileMenuOpen(false); openSearch(); }} aria-label="Search">
+                    <Search className="h-6 w-6" />
+                  </button>
+                  <button onClick={() => { setIsMobileMenuOpen(false); openAccount(); }} aria-label="Account">
+                    <User className="h-6 w-6" />
+                  </button>
+                  <button onClick={() => { setIsMobileMenuOpen(false); openWishlist(); }} aria-label="Wishlist" className="relative">
+                    <Heart className="h-6 w-6" />
+                    {wishlistCount > 0 && (
+                      <span className="absolute -top-2 -right-3 h-4 min-w-4 px-1 bg-primary text-white text-[10px] flex items-center justify-center rounded-full">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

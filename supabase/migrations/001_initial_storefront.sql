@@ -166,6 +166,24 @@ as $$
   group by p.id;
 $$;
 
+create or replace function public.is_admin(check_user_id uuid default auth.uid())
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1
+    from public.profiles
+    where id = check_user_id
+      and role = 'admin'
+  );
+$$;
+
+revoke all on function public.is_admin(uuid) from public;
+grant execute on function public.is_admin(uuid) to authenticated, service_role;
+
 alter table public.profiles enable row level security;
 alter table public.products enable row level security;
 alter table public.product_variants enable row level security;
@@ -220,105 +238,35 @@ with check (true);
 
 create policy "Admins manage profiles"
 on public.profiles for all
-using (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-)
-with check (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-);
+using (public.is_admin())
+with check (public.is_admin());
 
 create policy "Admins manage products"
 on public.products for all
-using (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-)
-with check (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-);
+using (public.is_admin())
+with check (public.is_admin());
 
 create policy "Admins manage variants"
 on public.product_variants for all
-using (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-)
-with check (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-);
+using (public.is_admin())
+with check (public.is_admin());
 
 create policy "Admins manage images"
 on public.product_images for all
-using (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-)
-with check (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-);
+using (public.is_admin())
+with check (public.is_admin());
 
 create policy "Admins manage cms"
 on public.cms_settings for all
-using (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-)
-with check (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-);
+using (public.is_admin())
+with check (public.is_admin());
 
 create policy "Admins manage orders"
 on public.orders for all
-using (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-)
-with check (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-);
+using (public.is_admin())
+with check (public.is_admin());
 
 create policy "Admins manage order items"
 on public.order_items for all
-using (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-)
-with check (
-  exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  )
-);
+using (public.is_admin())
+with check (public.is_admin());

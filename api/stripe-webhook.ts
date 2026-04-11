@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 
-import { stripe, supabaseAdmin } from './_lib/server';
+import { getStripe, getSupabaseAdmin } from './_lib/server';
 
 export const config = {
   api: {
@@ -27,6 +27,8 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    const stripe = getStripe();
+    const supabaseAdmin = getSupabaseAdmin();
     const rawBody = await readRawBody(req);
     const event = stripe.webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET as string);
 

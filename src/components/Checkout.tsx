@@ -22,6 +22,22 @@ import { useLocation } from 'react-router-dom';
 import { useStore } from '@/lib/store';
 import { toast } from 'sonner';
 
+async function parseApiResponse(response: Response) {
+  const raw = await response.text();
+  const contentType = response.headers.get('content-type') ?? '';
+  const isJson = contentType.includes('application/json');
+
+  if (isJson) {
+    try {
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  return raw ? { error: raw } : null;
+}
+
 export default function Checkout() {
   const location = useLocation();
   const isSuccessRoute = location.pathname === '/checkout/success';
@@ -116,9 +132,17 @@ export default function Checkout() {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
       if (!response.ok) {
-        throw new Error(data.error || 'Unable to create checkout session');
+        const message =
+          typeof data?.error === 'string'
+            ? data.error
+            : 'Unable to create checkout session';
+        throw new Error(message);
+      }
+
+      if (!data || typeof data.url !== 'string') {
+        throw new Error('Checkout session did not return a valid redirect URL.');
       }
 
       window.location.href = data.url;

@@ -1,4 +1,4 @@
-import { generateOrderNumber, stripe, supabaseAdmin } from './_lib/server';
+import { generateOrderNumber, getStripe, getSupabaseAdmin } from './_lib/server';
 
 type CheckoutItem = {
   id: string;
@@ -30,6 +30,8 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    const stripe = getStripe();
+    const supabaseAdmin = getSupabaseAdmin();
     const {
       email,
       shippingAddress,

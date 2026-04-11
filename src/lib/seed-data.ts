@@ -8,13 +8,15 @@ export const SEED_CMS_CONTENT: CMSContent = {
       'Discover our new arrivals featuring premium fabrics and minimal silhouettes designed for the modern wardrobe.',
     buttonText: 'Shop Collection',
     buttonLink: '/shop',
-    image: 'https://picsum.photos/seed/hero-fashion/1920/1080',
+    image:
+      'https://qlmumxqtifgbcttklfst.supabase.co/storage/v1/object/public/product-media/essential-ribbed-tank/white.jpeg',
   },
   aboutUs: {
     title: 'Our Philosophy',
     content:
       'At theDMAshop, we believe in the power of minimal design and premium craftsmanship. Our journey started with a simple idea: to create clothing that transcends seasons and trends. We source the finest materials and work with skilled artisans to bring you pieces that are not only beautiful but also built to last.',
-    image: 'https://picsum.photos/seed/editorial-fashion/1000/1200',
+    image:
+      'https://qlmumxqtifgbcttklfst.supabase.co/storage/v1/object/public/product-media/essential-ribbed-tank/butter-yellow.jpeg',
   },
   footer: {
     description:

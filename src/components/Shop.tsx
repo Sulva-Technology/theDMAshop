@@ -8,7 +8,7 @@ import {
   ArrowUpDown,
   Filter,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -36,8 +36,9 @@ import { toast } from 'sonner';
 
 export default function Shop() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { products, productsLoading, productsError, addToCart, wishlist, toggleWishlist } = useStore();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') ?? '');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -50,13 +51,35 @@ export default function Shop() {
     setPriceRange(derivedPriceRange);
   }, [derivedPriceRange[0], derivedPriceRange[1]]);
 
+  React.useEffect(() => {
+    setSearchQuery(searchParams.get('q') ?? '');
+  }, [searchParams]);
+
+  React.useEffect(() => {
+    if (searchParams.get('focus') !== 'search') {
+      return;
+    }
+
+    const input = document.getElementById('shop-search-input');
+    if (input instanceof HTMLInputElement) {
+      input.focus();
+      input.select();
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('focus');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   const categories = useMemo(() => ['All', ...getAvailableCategories(products)], [products]);
   const sizes = useMemo(() => getAvailableSizes(products), [products]);
   const colors = useMemo(() => getAvailableColors(products), [products]);
+  const isWishlistView = searchParams.get('wishlist') === '1';
 
   const filteredProducts = useMemo(() => {
     return products
       .filter((product) => {
+        const matchesWishlist = !isWishlistView || wishlist.includes(product.id);
         const matchesSearch =
           product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           product.category.toLowerCase().includes(searchQuery.toLowerCase());
@@ -70,7 +93,7 @@ export default function Shop() {
             variant.price <= priceRange[1],
         );
 
-        return matchesSearch && matchesCategory && matchesSize && matchesColor && matchesPrice;
+        return matchesWishlist && matchesSearch && matchesCategory && matchesSize && matchesColor && matchesPrice;
       })
       .sort((a, b) => {
         if (sortBy === 'price-low') return a.price - b.price;
@@ -79,7 +102,7 @@ export default function Shop() {
         if (sortBy === 'featured') return Number(b.isFeatured) - Number(a.isFeatured);
         return 0;
       });
-  }, [priceRange, products, searchQuery, selectedCategory, selectedColor, selectedSize, sortBy]);
+  }, [isWishlistView, priceRange, products, searchQuery, selectedCategory, selectedColor, selectedSize, sortBy, wishlist]);
 
   const handleAddToCart = (product: Product) => {
     const variant = getDefaultVariant(product);
@@ -107,6 +130,13 @@ export default function Shop() {
     setSelectedSize(null);
     setSelectedColor(null);
     setPriceRange(derivedPriceRange);
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.delete('q');
+      nextParams.delete('wishlist');
+      nextParams.delete('focus');
+      return nextParams;
+    });
   };
 
   const FilterSidebar = () => (
@@ -195,11 +225,15 @@ export default function Shop() {
       <main className="flex-grow max-w-7xl mx-auto w-full px-6 py-12">
         <div className="space-y-4 mb-12">
           <Badge variant="outline" className="rounded-full px-4 py-1 text-[10px] uppercase tracking-widest font-bold">
-            Live catalog
+            {isWishlistView ? 'Wishlist' : 'Live catalog'}
           </Badge>
-          <h1 className="text-5xl font-heading font-bold tracking-tighter">Shop All</h1>
+          <h1 className="text-5xl font-heading font-bold tracking-tighter">
+            {isWishlistView ? 'Your Wishlist' : 'Shop All'}
+          </h1>
           <p className="text-muted-foreground text-lg max-w-2xl">
-            Browse the live catalog synced from Supabase. Filters, pricing, and availability all reflect active product variants.
+            {isWishlistView
+              ? 'Browse the items you have saved and move them into your cart whenever you are ready.'
+              : 'Browse the live catalog synced from Supabase. Filters, pricing, and availability all reflect active product variants.'}
           </p>
         </div>
 
@@ -223,10 +257,23 @@ export default function Shop() {
                 <div className="relative w-full md:w-96">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    id="shop-search-input"
                     placeholder="Search products..."
                     className="pl-10 rounded-full bg-background border-none premium-shadow"
                     value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      setSearchQuery(nextValue);
+                      setSearchParams((currentParams) => {
+                        const nextParams = new URLSearchParams(currentParams);
+                        if (nextValue.trim()) {
+                          nextParams.set('q', nextValue);
+                        } else {
+                          nextParams.delete('q');
+                        }
+                        return nextParams;
+                      }, { replace: true });
+                    }}
                   />
                 </div>
 
@@ -311,7 +358,9 @@ export default function Shop() {
                     <div className="space-y-2">
                       <h3 className="text-2xl font-heading font-bold">No products match these filters</h3>
                       <p className="text-muted-foreground max-w-xs">
-                        Try widening the price range or clearing the category, size, and color filters.
+                        {isWishlistView
+                          ? 'Your wishlist is empty or your saved items do not match the current filters yet.'
+                          : 'Try widening the price range or clearing the category, size, and color filters.'}
                       </p>
                     </div>
                     <Button variant="outline" className="rounded-full px-8" onClick={clearFilters}>

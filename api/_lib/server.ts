@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 function requiredEnv(name: string) {
   const value = process.env[name];
@@ -9,15 +10,30 @@ function requiredEnv(name: string) {
   return value;
 }
 
-export const stripe = new Stripe(requiredEnv('STRIPE_SECRET_KEY'), {
-  apiVersion: '2026-03-25.dahlia',
-});
+let stripeClient: Stripe | null = null;
+let supabaseAdminClient: SupabaseClient | null = null;
 
-export const supabaseAdmin = createClient(
-  requiredEnv('SUPABASE_URL'),
-  requiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
-  { auth: { persistSession: false } },
-);
+export function getStripe() {
+  if (!stripeClient) {
+    stripeClient = new Stripe(requiredEnv('STRIPE_SECRET_KEY'), {
+      apiVersion: '2026-03-25.dahlia',
+    });
+  }
+
+  return stripeClient;
+}
+
+export function getSupabaseAdmin() {
+  if (!supabaseAdminClient) {
+    supabaseAdminClient = createClient(
+      requiredEnv('SUPABASE_URL'),
+      requiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
+      { auth: { persistSession: false } },
+    );
+  }
+
+  return supabaseAdminClient;
+}
 
 export function json(response: unknown, statusCode = 200) {
   return {
