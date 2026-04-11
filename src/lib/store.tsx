@@ -86,7 +86,7 @@ function mapProfileToUser(profile: Profile | null): User {
     id: profile.id,
     name: profile.fullName,
     email: profile.email,
-    role: profile.role === 'admin' ? 'ADMIN' : 'CUSTOMER',
+    role: profile.role?.toLowerCase() === 'admin' ? 'ADMIN' : 'CUSTOMER',
   };
 }
 
@@ -118,14 +118,15 @@ function getRouteFromPage(page: string) {
 }
 
 function getPageFromPath(pathname: string) {
-  if (pathname === '/') return 'home';
-  if (pathname.startsWith('/shop')) return 'shop';
-  if (pathname.startsWith('/products')) return 'details';
-  if (pathname.startsWith('/checkout')) return 'checkout';
-  if (pathname.startsWith('/about')) return 'about';
-  if (pathname.startsWith('/contact')) return 'contact';
-  if (pathname.startsWith('/auth')) return 'auth';
-  if (pathname.startsWith('/admin')) return 'admin';
+  const cleanPath = pathname.replace(/\/$/, '') || '/';
+  if (cleanPath === '/') return 'home';
+  if (cleanPath.startsWith('/shop')) return 'shop';
+  if (cleanPath.startsWith('/products')) return 'details';
+  if (cleanPath.startsWith('/checkout')) return 'checkout';
+  if (cleanPath.startsWith('/about')) return 'about';
+  if (cleanPath.startsWith('/contact')) return 'contact';
+  if (cleanPath.startsWith('/auth')) return 'auth';
+  if (cleanPath.startsWith('/admin')) return 'admin';
   return 'home';
 }
 

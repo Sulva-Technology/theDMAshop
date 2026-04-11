@@ -98,18 +98,21 @@ function RoutedApp() {
           ]} />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin-login" element={<Navigate to="/auth" replace state={{ from: '/admin' }} />} />
-          <Route element={<AuthenticatedRoute />}>
-            <Route path="/account" element={<AccountDashboard />} />
-            <Route path="/account/orders" element={<AccountDashboard />} />
+          
+          <Route path="/account" element={<AuthenticatedRoute />}>
+            <Route index element={<AccountDashboard />} />
+            <Route path="orders" element={<AccountDashboard />} />
           </Route>
-          <Route element={<AdminRoute />}>
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/products" element={<AdminDashboard />} />
-            <Route path="/admin/orders" element={<AdminDashboard />} />
-            <Route path="/admin/customers" element={<AdminDashboard />} />
-            <Route path="/admin/content" element={<AdminDashboard />} />
-            <Route path="/admin/analytics" element={<AdminDashboard />} />
+
+          <Route path="/admin" element={<AdminRoute />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="products" element={<AdminDashboard />} />
+            <Route path="orders" element={<AdminDashboard />} />
+            <Route path="customers" element={<AdminDashboard />} />
+            <Route path="content" element={<AdminDashboard />} />
+            <Route path="analytics" element={<AdminDashboard />} />
           </Route>
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
