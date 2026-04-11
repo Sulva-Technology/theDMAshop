@@ -14,6 +14,10 @@ export default function AdminCMS() {
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  React.useEffect(() => {
+    setFormData(cmsContent);
+  }, [cmsContent]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -83,7 +87,7 @@ export default function AdminCMS() {
               <ImageUpload 
                 value={formData.hero.image} 
                 onChange={url => updateHero('image', url as string)}
-                bucket="banners"
+                bucket="product-media"
               />
             </div>
             <div className="space-y-2">
@@ -137,7 +141,7 @@ export default function AdminCMS() {
               <ImageUpload 
                 value={formData.aboutUs.image} 
                 onChange={url => updateAboutUs('image', url as string)}
-                bucket="banners"
+                bucket="product-media"
               />
             </div>
             <div className="space-y-2">

@@ -1,5 +1,4 @@
-import { SEED_ORDERS } from '@/lib/seed-data';
-import { hasSupabaseConfig, requireSupabase } from '@/lib/supabase';
+import { requireSupabase } from '@/lib/supabase';
 import type { Order } from '@/lib/types';
 
 function mapOrder(row: any): Order {
@@ -72,8 +71,8 @@ const ORDER_SELECT = `
 `;
 
 export async function fetchOrdersForCurrentUser(userId?: string | null): Promise<Order[]> {
-  if (!hasSupabaseConfig || !userId) {
-    return SEED_ORDERS;
+  if (!userId) {
+    return [];
   }
 
   const supabase = requireSupabase();
@@ -91,10 +90,6 @@ export async function fetchOrdersForCurrentUser(userId?: string | null): Promise
 }
 
 export async function fetchAdminOrders(): Promise<Order[]> {
-  if (!hasSupabaseConfig) {
-    return SEED_ORDERS;
-  }
-
   const supabase = requireSupabase();
   const { data, error } = await supabase.from('orders').select(ORDER_SELECT).order('created_at', { ascending: false });
   if (error) {
@@ -105,10 +100,6 @@ export async function fetchAdminOrders(): Promise<Order[]> {
 }
 
 export async function updateOrderFulfillmentStatus(orderId: string, status: Order['fulfillmentStatus']) {
-  if (!hasSupabaseConfig) {
-    return;
-  }
-
   const supabase = requireSupabase();
   const { error } = await supabase.from('orders').update({ fulfillment_status: status }).eq('id', orderId);
   if (error) {

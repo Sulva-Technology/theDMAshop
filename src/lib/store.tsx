@@ -10,7 +10,7 @@ import React, {
 import type { Session } from '@supabase/supabase-js';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { SEED_CMS_CONTENT, SEED_PRODUCTS } from '@/lib/seed-data';
+import { EMPTY_CMS_CONTENT } from '@/lib/defaults';
 import { fetchCMSContent, saveCMSContent } from '@/lib/services/cms';
 import { submitContactMessage } from '@/lib/services/contact';
 import { fetchAdminCustomers } from '@/lib/services/customers';
@@ -35,6 +35,7 @@ type StoreContextType = {
   saveProduct: (product: Product) => Promise<void>;
   archiveProduct: (productId: string) => Promise<void>;
   productsLoading: boolean;
+  productsError: string | null;
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
@@ -54,13 +55,16 @@ type StoreContextType = {
   addOrder: (order: Order) => void;
   updateOrderStatus: (orderId: string, status: Order['fulfillmentStatus']) => Promise<void>;
   ordersLoading: boolean;
+  ordersError: string | null;
   customers: CustomerSummary[];
   setCustomers: React.Dispatch<React.SetStateAction<CustomerSummary[]>>;
   customersLoading: boolean;
+  customersError: string | null;
   cmsContent: CMSContent;
   setCmsContent: React.Dispatch<React.SetStateAction<CMSContent>>;
   saveCmsContent: (content: CMSContent) => Promise<void>;
   contentLoading: boolean;
+  contentError: string | null;
   currentPage: string;
   setCurrentPage: (page: string) => void;
   selectedProductId: string | null;
@@ -171,8 +175,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [products, setProducts] = useState<Product[]>(SEED_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>(() => loadStoredJson(CART_STORAGE_KEY, [] as CartItem[]));
   const [wishlist, setWishlist] = useState<string[]>(() => loadStoredJson(WISHLIST_STORAGE_KEY, [] as string[]));
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -180,10 +185,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
   const [customers, setCustomers] = useState<CustomerSummary[]>([]);
   const [customersLoading, setCustomersLoading] = useState(true);
-  const [cmsContent, setCmsContent] = useState<CMSContent>(SEED_CMS_CONTENT);
+  const [customersError, setCustomersError] = useState<string | null>(null);
+  const [cmsContent, setCmsContent] = useState<CMSContent>(EMPTY_CMS_CONTENT);
   const [contentLoading, setContentLoading] = useState(true);
+  const [contentError, setContentError] = useState<string | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -197,7 +205,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const refreshProducts = useCallback(async () => {
     setProductsLoading(true);
     try {
+      setProductsError(null);
       setProducts(await fetchProducts(Boolean(profile && profile.role === 'admin')));
+    } catch (error: any) {
+      setProducts([]);
+      setProductsError(error?.message ?? 'Unable to load products from Supabase.');
     } finally {
       setProductsLoading(false);
     }
@@ -206,7 +218,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const refreshCMS = useCallback(async () => {
     setContentLoading(true);
     try {
+      setContentError(null);
       setCmsContent(await fetchCMSContent());
+    } catch (error: any) {
+      setCmsContent(EMPTY_CMS_CONTENT);
+      setContentError(error?.message ?? 'Unable to load storefront content from Supabase.');
     } finally {
       setContentLoading(false);
     }
@@ -215,11 +231,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const refreshOrders = useCallback(async () => {
     setOrdersLoading(true);
     try {
+      setOrdersError(null);
       if (profile?.role === 'admin') {
         setOrders(await fetchAdminOrders());
       } else {
         setOrders(await fetchOrdersForCurrentUser(profile?.id));
       }
+    } catch (error: any) {
+      setOrders([]);
+      setOrdersError(error?.message ?? 'Unable to load orders from Supabase.');
     } finally {
       setOrdersLoading(false);
     }
@@ -229,12 +249,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (profile?.role !== 'admin') {
       setCustomers([]);
       setCustomersLoading(false);
+      setCustomersError(null);
       return;
     }
 
     setCustomersLoading(true);
     try {
+      setCustomersError(null);
       setCustomers(await fetchAdminCustomers());
+    } catch (error: any) {
+      setCustomers([]);
+      setCustomersError(error?.message ?? 'Unable to load customers from Supabase.');
     } finally {
       setCustomersLoading(false);
     }
@@ -440,6 +465,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       saveProduct,
       archiveProduct: archiveProductById,
       productsLoading,
+      productsError,
       cart,
       addToCart,
       removeFromCart,
@@ -459,13 +485,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addOrder,
       updateOrderStatus,
       ordersLoading,
+      ordersError,
       customers,
       setCustomers,
       customersLoading,
+      customersError,
       cmsContent,
       setCmsContent,
       saveCmsContent: saveCms,
       contentLoading,
+      contentError,
       currentPage: getPageFromPath(location.pathname),
       setCurrentPage,
       selectedProductId,
@@ -478,6 +507,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       saveProduct,
       archiveProductById,
       productsLoading,
+      productsError,
       cart,
       addToCart,
       removeFromCart,
@@ -495,11 +525,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addOrder,
       updateOrderStatus,
       ordersLoading,
+      ordersError,
       customers,
       customersLoading,
+      customersError,
       cmsContent,
       saveCms,
       contentLoading,
+      contentError,
       location.pathname,
       setCurrentPage,
       selectedProductId,

@@ -1,12 +1,7 @@
-import { SEED_CUSTOMERS } from '@/lib/seed-data';
-import { hasSupabaseConfig, requireSupabase } from '@/lib/supabase';
+import { requireSupabase } from '@/lib/supabase';
 import type { CustomerSummary } from '@/lib/types';
 
 export async function fetchAdminCustomers(): Promise<CustomerSummary[]> {
-  if (!hasSupabaseConfig) {
-    return SEED_CUSTOMERS;
-  }
-
   const supabase = requireSupabase();
   const { data, error } = await supabase.rpc('admin_customer_summaries');
   if (error) {

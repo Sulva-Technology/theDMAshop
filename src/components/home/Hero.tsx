@@ -4,23 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { useStore } from '@/lib/store';
 
-const VARIANTS = [
-  {
-    id: 'navy',
-    name: 'Midnight Navy',
-    colorCode: '#0f172a',
-    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=1000&auto=format&fit=crop', // Coat placeholder
-  },
-  {
-    id: 'ivory',
-    name: 'Ivory Bone',
-    colorCode: '#f3f4f6',
-    image: 'https://images.unsplash.com/photo-1604644401890-0bd678c83788?q=80&w=1000&auto=format&fit=crop', // Coat placeholder 2
-  }
-];
-
 export function Hero() {
-  const [activeVariant, setActiveVariant] = useState(VARIANTS[0]);
   const [isLoaded, setIsLoaded] = useState(false);
   const { setCurrentPage, cmsContent } = useStore();
 

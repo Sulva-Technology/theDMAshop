@@ -71,8 +71,8 @@ export default function AboutUs() {
                     and didn't require a second mortgage to afford.
                   </p>
                   <p>
-theDMAshop was born from the desire to bridge that gap. We spent years
-                    sourcing the finest fabrics, refining our fits, and partnering with ethical 
+                    theDMAshop was born from the desire to bridge that gap. We spent years
+                    sourcing the finest fabrics, refining our fits, and partnering with ethical
                     manufacturers who share our vision.
                   </p>
                   <p>

@@ -2,32 +2,25 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { useStore } from '@/lib/store';
-
-const CATEGORIES = [
-  {
-    title: "Men's Collection",
-    image: "https://picsum.photos/seed/cat-men/800/1200",
-    size: "large"
-  },
-  {
-    title: "Women's Collection",
-    image: "https://picsum.photos/seed/cat-women/800/1200",
-    size: "large"
-  },
-  {
-    title: "Accessories",
-    image: "https://picsum.photos/seed/cat-acc/800/1200",
-    size: "small"
-  },
-  {
-    title: "Essentials",
-    image: "https://picsum.photos/seed/cat-ess/800/1200",
-    size: "small"
-  }
-];
+import { getAvailableCategories, getProductPrimaryImage } from '@/lib/product-helpers';
 
 export function Categories() {
-  const { setCurrentPage } = useStore();
+  const { products, setCurrentPage } = useStore();
+  const categories = getAvailableCategories(products)
+    .map((category, index) => {
+      const firstProduct = products.find((product) => product.category === category);
+      return {
+        title: category,
+        image: firstProduct ? getProductPrimaryImage(firstProduct) : '',
+        size: index < 2 ? 'large' : 'small',
+      };
+    })
+    .slice(0, 4);
+
+  if (categories.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-24 max-w-7xl mx-auto px-6">
       <div className="space-y-4 mb-12">
@@ -36,7 +29,7 @@ export function Categories() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {CATEGORIES.map((cat, i) => (
+        {categories.map((cat, i) => (
           <motion.div 
             key={i}
             whileHover={{ y: -10 }}

@@ -205,7 +205,7 @@ export default function AdminProducts() {
                     <ImageUpload 
                       value={newProduct.image} 
                       onChange={(url) => setNewProduct({...newProduct, image: url as string})} 
-                      bucket="products"
+                      bucket="product-media"
                     />
                   </div>
                   <div className="space-y-2">
@@ -213,7 +213,7 @@ export default function AdminProducts() {
                     <ImageUpload 
                       value={newProduct.images} 
                       onChange={(urls) => setNewProduct({...newProduct, images: urls as string[]})} 
-                      bucket="products"
+                      bucket="product-media"
                       multiple
                     />
                   </div>

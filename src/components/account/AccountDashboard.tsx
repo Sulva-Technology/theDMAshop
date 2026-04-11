@@ -1,4 +1,4 @@
-import { BadgeCheck, Package, User, Mail, MapPin } from 'lucide-react';
+import { BadgeCheck, Mail, MapPin, Package, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { useStore } from '@/lib/store';
 
 export default function AccountDashboard() {
   const location = useLocation();
-  const { profile, orders, ordersLoading } = useStore();
+  const { profile, orders, ordersLoading, ordersError } = useStore();
   const isOrdersView = location.pathname.startsWith('/account/orders');
 
   return (
@@ -44,6 +44,8 @@ export default function AccountDashboard() {
             <div className="divide-y divide-border/50">
               {ordersLoading ? (
                 <div className="p-8 text-muted-foreground">Loading orders...</div>
+              ) : ordersError ? (
+                <div className="p-8 text-muted-foreground">{ordersError}</div>
               ) : orders.length === 0 ? (
                 <div className="p-8 text-muted-foreground">No orders yet.</div>
               ) : (
@@ -57,7 +59,7 @@ export default function AccountDashboard() {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {order.items.length} item{order.items.length === 1 ? '' : 's'} • {order.customerEmail}
+                        {`${order.items.length} item${order.items.length === 1 ? '' : 's'} • ${order.customerEmail}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-4">

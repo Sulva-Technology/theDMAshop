@@ -4,24 +4,22 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { toast } from 'sonner';
+import { buildCartItem, getDefaultVariant } from '@/lib/product-helpers';
+import type { Product } from '@/lib/types';
 
 export function FeaturedProducts() {
   const { products, addToCart, wishlist, toggleWishlist, setCurrentPage, setSelectedProductId } = useStore();
   
-  // Just take the first two products for featured
-  const featuredProducts = products.slice(0, 2);
+  const featuredProducts = products.filter((product) => product.isFeatured).slice(0, 4);
 
-  const handleAddToCart = (product: any) => {
-    addToCart({
-      id: `${product.id}-${product.colors[0]}-${product.sizes[0]}`,
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      color: product.colors[0],
-      size: product.sizes[0],
-      quantity: 1
-    });
+  const handleAddToCart = (product: Product) => {
+    const variant = getDefaultVariant(product);
+    if (!variant) {
+      toast.error('This product is currently unavailable');
+      return;
+    }
+
+    addToCart(buildCartItem(product, variant));
     toast.success("Added to cart");
   };
 
@@ -47,7 +45,12 @@ export function FeaturedProducts() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      {featuredProducts.length === 0 ? (
+        <div className="rounded-3xl border border-border/50 bg-secondary/10 p-10 text-center text-muted-foreground">
+          Mark products as featured in the admin catalog to populate this section.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {featuredProducts.map((product) => (
           <ProductCard 
             key={product.id} 
@@ -66,14 +69,8 @@ export function FeaturedProducts() {
             }}
           />
         ))}
-        {/* Placeholders to fill the grid for visual balance */}
-        <div className="hidden lg:block aspect-[4/5] rounded-3xl bg-secondary/20 border-2 border-dashed border-border flex items-center justify-center text-muted-foreground italic p-8 text-center">
-          More arrivals coming soon
         </div>
-        <div className="hidden lg:block aspect-[4/5] rounded-3xl bg-secondary/20 border-2 border-dashed border-border flex items-center justify-center text-muted-foreground italic p-8 text-center">
-          More arrivals coming soon
-        </div>
-      </div>
+      )}
     </section>
   );
 }

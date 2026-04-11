@@ -1,17 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Search, 
-  SlidersHorizontal, 
-  ChevronDown, 
-  X, 
-  ShoppingBag, 
-  Heart, 
-  LayoutGrid, 
+import {
+  Search,
+  ChevronDown,
+  LayoutGrid,
   StretchHorizontal,
   ArrowUpDown,
-  Filter
+  Filter,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/ui/ProductCard';
@@ -19,72 +17,96 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
 import { useStore } from '@/lib/store';
+import {
+  buildCartItem,
+  getAvailableCategories,
+  getAvailableColors,
+  getAvailableSizes,
+  getDefaultVariant,
+  getPriceRange,
+} from '@/lib/product-helpers';
+import type { Product } from '@/lib/types';
 import { toast } from 'sonner';
 
-const CATEGORIES = ["All", "Essentials", "Outerwear", "Bottoms", "Accessories"];
-const SIZES = ["S", "M", "L", "XL", "30", "32", "34"];
-const COLORS = ["Navy", "White", "Black", "Camel", "Charcoal", "Beige", "Forest", "Gray"];
-
 export default function Shop() {
-  const { products, addToCart, wishlist, toggleWishlist, setCurrentPage, setSelectedProductId } = useStore();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [priceRange, setPriceRange] = useState([0, 500]);
-  const [sortBy, setSortBy] = useState("featured");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const navigate = useNavigate();
+  const { products, productsLoading, productsError, addToCart, wishlist, toggleWishlist } = useStore();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const derivedPriceRange = useMemo(() => getPriceRange(products), [products]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
+  const [sortBy, setSortBy] = useState('featured');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  React.useEffect(() => {
+    setPriceRange(derivedPriceRange);
+  }, [derivedPriceRange[0], derivedPriceRange[1]]);
+
+  const categories = useMemo(() => ['All', ...getAvailableCategories(products)], [products]);
+  const sizes = useMemo(() => getAvailableSizes(products), [products]);
+  const colors = useMemo(() => getAvailableColors(products), [products]);
 
   const filteredProducts = useMemo(() => {
-    return products.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
-      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-      return matchesSearch && matchesCategory && matchesPrice;
-    }).sort((a, b) => {
-      if (sortBy === "price-low") return a.price - b.price;
-      if (sortBy === "price-high") return b.price - a.price;
-      return 0;
-    });
-  }, [products, searchQuery, selectedCategory, priceRange, sortBy]);
+    return products
+      .filter((product) => {
+        const matchesSearch =
+          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.category.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+        const matchesSize = !selectedSize || product.variants.some((variant) => variant.status === 'active' && variant.size === selectedSize);
+        const matchesColor = !selectedColor || product.variants.some((variant) => variant.status === 'active' && variant.color === selectedColor);
+        const matchesPrice = product.variants.some(
+          (variant) =>
+            variant.status === 'active' &&
+            variant.price >= priceRange[0] &&
+            variant.price <= priceRange[1],
+        );
 
-  const handleAddToCart = (product: any) => {
-    addToCart({
-      id: `${product.id}-${product.colors[0]}-${product.sizes[0]}`,
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      color: product.colors[0],
-      size: product.sizes[0],
-      quantity: 1
-    });
-    toast.success("Added to cart");
+        return matchesSearch && matchesCategory && matchesSize && matchesColor && matchesPrice;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'price-low') return a.price - b.price;
+        if (sortBy === 'price-high') return b.price - a.price;
+        if (sortBy === 'newest') return Number(new Date(b.createdAt ?? 0)) - Number(new Date(a.createdAt ?? 0));
+        if (sortBy === 'featured') return Number(b.isFeatured) - Number(a.isFeatured);
+        return 0;
+      });
+  }, [priceRange, products, searchQuery, selectedCategory, selectedColor, selectedSize, sortBy]);
+
+  const handleAddToCart = (product: Product) => {
+    const variant = getDefaultVariant(product);
+    if (!variant) {
+      toast.error('This product is currently unavailable');
+      return;
+    }
+
+    addToCart(buildCartItem(product, variant));
+    toast.success('Added to cart');
   };
 
   const handleToggleWishlist = (productId: string) => {
     toggleWishlist(productId);
     if (!wishlist.includes(productId)) {
-      toast.success("Added to wishlist");
+      toast.success('Added to wishlist');
     } else {
-      toast.info("Removed from wishlist");
+      toast.info('Removed from wishlist');
     }
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('All');
+    setSelectedSize(null);
+    setSelectedColor(null);
+    setPriceRange(derivedPriceRange);
   };
 
   const FilterSidebar = () => (
@@ -92,18 +114,11 @@ export default function Shop() {
       <div className="space-y-4">
         <h3 className="text-sm font-bold uppercase tracking-widest">Categories</h3>
         <div className="space-y-2">
-          {CATEGORIES.map(cat => (
-            <div key={cat} className="flex items-center space-x-2">
-              <Checkbox 
-                id={`cat-${cat}`} 
-                checked={selectedCategory === cat}
-                onCheckedChange={() => setSelectedCategory(cat)}
-              />
-              <Label 
-                htmlFor={`cat-${cat}`}
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-              >
-                {cat}
+          {categories.map((category) => (
+            <div key={category} className="flex items-center space-x-2">
+              <Checkbox id={`cat-${category}`} checked={selectedCategory === category} onCheckedChange={() => setSelectedCategory(category)} />
+              <Label htmlFor={`cat-${category}`} className="cursor-pointer text-sm font-medium">
+                {category}
               </Label>
             </div>
           ))}
@@ -118,52 +133,58 @@ export default function Shop() {
           <span className="text-xs font-mono text-muted-foreground">${priceRange[0]} - ${priceRange[1]}</span>
         </div>
         <Slider
-          defaultValue={[0, 500]}
-          max={500}
-          step={10}
+          min={derivedPriceRange[0]}
+          max={Math.max(derivedPriceRange[1], derivedPriceRange[0] + 1)}
+          step={1}
           value={priceRange}
-          onValueChange={setPriceRange}
+          onValueChange={(value) => setPriceRange(value as [number, number])}
           className="py-4"
         />
       </div>
 
-      <Separator />
+      {sizes.length > 0 && (
+        <>
+          <Separator />
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold uppercase tracking-widest">Size</h3>
+            <div className="flex flex-wrap gap-2">
+              {sizes.map((size) => (
+                <Button
+                  key={size}
+                  variant={selectedSize === size ? 'default' : 'outline'}
+                  size="sm"
+                  className="rounded-lg min-w-[40px] h-10"
+                  onClick={() => setSelectedSize((current) => (current === size ? null : size))}
+                >
+                  {size}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
-      <div className="space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-widest">Size</h3>
-        <div className="flex flex-wrap gap-2">
-          {SIZES.map(size => (
-            <Button 
-              key={size} 
-              variant="outline" 
-              size="sm" 
-              className="rounded-lg min-w-[40px] h-10 hover:border-primary hover:text-primary transition-colors"
-            >
-              {size}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-widest">Colors</h3>
-        <div className="flex flex-wrap gap-3">
-          {COLORS.map(color => (
-            <button 
-              key={color}
-              className="group relative flex flex-col items-center gap-1"
-              title={color}
-            >
-              <div 
-                className={`h-6 w-6 rounded-full border border-border group-hover:scale-110 transition-transform`}
-                style={{ backgroundColor: color.toLowerCase() === 'navy' ? '#000080' : color.toLowerCase() }}
-              />
-            </button>
-          ))}
-        </div>
-      </div>
+      {colors.length > 0 && (
+        <>
+          <Separator />
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold uppercase tracking-widest">Colors</h3>
+            <div className="flex flex-wrap gap-3">
+              {colors.map((color) => (
+                <button
+                  key={color}
+                  className={`group relative flex flex-col items-center gap-1 ${selectedColor === color ? 'scale-110' : ''}`}
+                  title={color}
+                  onClick={() => setSelectedColor((current) => (current === color ? null : color))}
+                >
+                  <div className="h-6 w-6 rounded-full border border-border bg-secondary" />
+                  <span className="text-[10px] text-muted-foreground">{color}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -172,197 +193,144 @@ export default function Shop() {
       <Navbar />
 
       <main className="flex-grow max-w-7xl mx-auto w-full px-6 py-12">
-        {/* Page Header */}
         <div className="space-y-4 mb-12">
-          <Badge variant="outline" className="rounded-full px-4 py-1 text-[10px] uppercase tracking-widest font-bold">Collection 2026</Badge>
+          <Badge variant="outline" className="rounded-full px-4 py-1 text-[10px] uppercase tracking-widest font-bold">
+            Live catalog
+          </Badge>
           <h1 className="text-5xl font-heading font-bold tracking-tighter">Shop All</h1>
           <p className="text-muted-foreground text-lg max-w-2xl">
-            Explore our curated selection of premium essentials. Meticulously designed for the modern individual who values quality and timeless style.
+            Browse the live catalog synced from Supabase. Filters, pricing, and availability all reflect active product variants.
           </p>
         </div>
 
-        {/* Promo Banner */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full bg-primary rounded-3xl p-6 sm:p-8 md:p-12 mb-16 relative overflow-hidden group"
-        >
-          <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
-            <div className="space-y-4 text-center md:text-left">
-              <Badge className="bg-white text-primary hover:bg-white/90 rounded-full px-4">Limited Offer</Badge>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-white tracking-tight break-words">
-                Get 20% off your first order
-              </h2>
-              <p className="text-white/70 max-w-md mx-auto md:mx-0">
-            Join theDMAshop community today and elevate your wardrobe with our premium essentials.
-              </p>
-            </div>
-            <Button size="lg" className="bg-white text-primary hover:bg-white/90 rounded-full px-8 sm:px-10 py-6 sm:py-7 text-base sm:text-lg font-bold premium-shadow shrink-0">
-              Claim Discount
-            </Button>
+        {productsLoading ? (
+          <div className="rounded-3xl border border-border/50 bg-secondary/10 p-10 text-center text-muted-foreground">
+            Loading products...
           </div>
-          {/* Abstract Background */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl"></div>
-        </motion.div>
+        ) : productsError ? (
+          <div className="rounded-3xl border border-amber-500/20 bg-amber-500/5 p-10 text-center space-y-3">
+            <h2 className="text-2xl font-heading font-bold">Catalog unavailable</h2>
+            <p className="text-muted-foreground">{productsError}</p>
+          </div>
+        ) : (
+          <div className="flex flex-col lg:flex-row gap-12">
+            <aside className="hidden lg:block w-64 shrink-0">
+              <FilterSidebar />
+            </aside>
 
-        <div className="flex flex-col lg:flex-row gap-12">
-          {/* Desktop Sidebar */}
-          <aside className="hidden lg:block w-64 shrink-0">
-            <FilterSidebar />
-          </aside>
+            <div className="flex-grow space-y-8">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-secondary/20 p-4 rounded-2xl border border-border/50">
+                <div className="relative w-full md:w-96">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search products..."
+                    className="pl-10 rounded-full bg-background border-none premium-shadow"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                  />
+                </div>
 
-          {/* Main Content Area */}
-          <div className="flex-grow space-y-8">
-            {/* Toolbar */}
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-secondary/20 p-4 rounded-2xl border border-border/50">
-              <div className="relative w-full md:w-96">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search products..." 
-                  className="pl-10 rounded-full bg-background border-none premium-shadow focus-visible:ring-primary"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                {/* Mobile Filter Trigger */}
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="lg:hidden rounded-full gap-2">
-                      <Filter className="h-4 w-4" />
-                      Filters
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                    <SheetHeader className="mb-8">
-                      <SheetTitle className="text-2xl font-heading font-bold">Filters</SheetTitle>
-                      <SheetDescription>Refine your search results</SheetDescription>
-                    </SheetHeader>
-                    <FilterSidebar />
-                  </SheetContent>
-                </Sheet>
-
-                <div className="flex items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="rounded-full gap-2">
-                        <ArrowUpDown className="h-4 w-4" />
-                        Sort: {sortBy === 'featured' ? 'Featured' : sortBy === 'price-low' ? 'Price Low' : 'Price High'}
-                        <ChevronDown className="h-4 w-4 opacity-50" />
+                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" className="lg:hidden rounded-full gap-2">
+                        <Filter className="h-4 w-4" />
+                        Filters
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-xl p-2">
-                      <DropdownMenuItem onClick={() => setSortBy('featured')} className="rounded-lg">Featured</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortBy('price-low')} className="rounded-lg">Price: Low to High</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortBy('price-high')} className="rounded-lg">Price: High to Low</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                      <SheetHeader className="mb-8">
+                        <SheetTitle className="text-2xl font-heading font-bold">Filters</SheetTitle>
+                        <SheetDescription>Refine your live catalog results</SheetDescription>
+                      </SheetHeader>
+                      <FilterSidebar />
+                    </SheetContent>
+                  </Sheet>
 
-                  <div className="hidden sm:flex items-center bg-background rounded-full p-1 border border-border">
-                    <Button 
-                      variant={viewMode === 'grid' ? 'secondary' : 'ghost'} 
-                      size="icon" 
-                      className="rounded-full h-8 w-8"
-                      onClick={() => setViewMode('grid')}
-                    >
-                      <LayoutGrid className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant={viewMode === 'list' ? 'secondary' : 'ghost'} 
-                      size="icon" 
-                      className="rounded-full h-8 w-8"
-                      onClick={() => setViewMode('list')}
-                    >
-                      <StretchHorizontal className="h-4 w-4" />
-                    </Button>
+                  <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="rounded-full gap-2">
+                          <ArrowUpDown className="h-4 w-4" />
+                          Sort
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="rounded-xl p-2">
+                        <DropdownMenuItem onClick={() => setSortBy('featured')} className="rounded-lg">Featured</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSortBy('newest')} className="rounded-lg">Newest</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSortBy('price-low')} className="rounded-lg">Price: Low to High</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSortBy('price-high')} className="rounded-lg">Price: High to Low</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <div className="hidden sm:flex items-center bg-background rounded-full p-1 border border-border">
+                      <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="rounded-full h-8 w-8" onClick={() => setViewMode('grid')}>
+                        <LayoutGrid className="h-4 w-4" />
+                      </Button>
+                      <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="rounded-full h-8 w-8" onClick={() => setViewMode('list')}>
+                        <StretchHorizontal className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Product Grid */}
-            <AnimatePresence mode="wait">
-              {filteredProducts.length > 0 ? (
-                <motion.div 
-                  key="grid"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className={`grid gap-8 ${
-                    viewMode === 'grid' 
-                      ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' 
-                      : 'grid-cols-1'
-                  }`}
-                >
-                  {filteredProducts.map((product) => (
-                    <ProductCard 
-                      key={product.id}
-                      id={product.id}
-                      name={product.name}
-                      price={`$${product.price.toFixed(2)}`}
-                      category={product.category}
-                      image={product.image}
-                      isNew={product.isNew}
-                      onAddToCart={() => handleAddToCart(product)}
-                      onToggleWishlist={() => handleToggleWishlist(product.id)}
-                      isWishlisted={wishlist.includes(product.id)}
-                      onClick={() => {
-                        setSelectedProductId(product.id);
-                        setCurrentPage('details');
-                      }}
-                    />
-                  ))}
-                </motion.div>
-              ) : (
-                <motion.div 
-                  key="empty"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center justify-center py-24 text-center space-y-6 bg-secondary/10 rounded-3xl border-2 border-dashed border-border"
-                >
-                  <div className="h-20 w-20 rounded-full bg-secondary/20 flex items-center justify-center">
-                    <Search className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-2xl font-heading font-bold">No products found</h3>
-                    <p className="text-muted-foreground max-w-xs">
-                      Try adjusting your filters or search query to find what you're looking for.
-                    </p>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    className="rounded-full px-8"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setSelectedCategory("All");
-                      setPriceRange([0, 500]);
-                    }}
+              <AnimatePresence mode="wait">
+                {filteredProducts.length > 0 ? (
+                  <motion.div
+                    key="grid"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className={`grid gap-8 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}
                   >
-                    Clear all filters
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    {filteredProducts.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        id={product.id}
+                        name={product.name}
+                        price={`$${product.price.toFixed(2)}`}
+                        category={product.category}
+                        image={product.image}
+                        isNew={product.isNew}
+                        onAddToCart={() => handleAddToCart(product)}
+                        onToggleWishlist={() => handleToggleWishlist(product.id)}
+                        isWishlisted={wishlist.includes(product.id)}
+                        onClick={() => navigate(`/products/${product.slug}`)}
+                      />
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col items-center justify-center py-24 text-center space-y-6 bg-secondary/10 rounded-3xl border-2 border-dashed border-border"
+                  >
+                    <div className="space-y-2">
+                      <h3 className="text-2xl font-heading font-bold">No products match these filters</h3>
+                      <p className="text-muted-foreground max-w-xs">
+                        Try widening the price range or clearing the category, size, and color filters.
+                      </p>
+                    </div>
+                    <Button variant="outline" className="rounded-full px-8" onClick={clearFilters}>
+                      Clear all filters
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            {/* Pagination */}
-            {filteredProducts.length > 0 && (
-              <div className="flex flex-col items-center gap-4 pt-12">
-                <p className="text-sm text-muted-foreground">Showing {filteredProducts.length} of {products.length} products</p>
-                <div className="w-64 h-1 bg-secondary rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary transition-all duration-500" 
-                    style={{ width: `${(filteredProducts.length / products.length) * 100}%` }}
-                  ></div>
+              {filteredProducts.length > 0 && (
+                <div className="flex flex-col items-center gap-4 pt-12">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {filteredProducts.length} of {products.length} products
+                  </p>
                 </div>
-                <Button variant="outline" size="lg" className="rounded-full px-12 py-6 premium-shadow-hover mt-4">
-                  Load More
-                </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
       <Footer />

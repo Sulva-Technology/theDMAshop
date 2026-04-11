@@ -76,13 +76,13 @@ export function Navbar() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {user.role === 'admin' && (
+                  {user.role === 'ADMIN' && (
                     <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => setCurrentPage('admin')}>
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       <span>Admin Dashboard</span>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => setCurrentPage('auth')}>
+                  <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => setCurrentPage('/account')}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>

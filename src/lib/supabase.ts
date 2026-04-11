@@ -24,7 +24,7 @@ export function requireSupabase(): SupabaseClient {
 
 export async function uploadImage(file: File, bucket = 'media'): Promise<string | null> {
   if (!supabase) {
-    return URL.createObjectURL(file);
+    throw new Error('Supabase storage is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then restart the app.');
   }
 
   const fileExt = file.name.split('.').pop();

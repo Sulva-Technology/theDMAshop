@@ -1,5 +1,4 @@
-import { SEED_PRODUCTS } from '@/lib/seed-data';
-import { hasSupabaseConfig, requireSupabase } from '@/lib/supabase';
+import { requireSupabase } from '@/lib/supabase';
 import type { Product, ProductImage, ProductVariant } from '@/lib/types';
 
 type ProductRow = {
@@ -110,10 +109,6 @@ const PRODUCT_SELECT = `
 `;
 
 export async function fetchProducts(includeArchived = false): Promise<Product[]> {
-  if (!hasSupabaseConfig) {
-    return SEED_PRODUCTS.filter((product) => includeArchived || product.status === 'active');
-  }
-
   const supabase = requireSupabase();
   let query = supabase.from('products').select(PRODUCT_SELECT).order('created_at', { ascending: false });
   if (!includeArchived) {
@@ -129,10 +124,6 @@ export async function fetchProducts(includeArchived = false): Promise<Product[]>
 }
 
 export async function fetchProductBySlug(slug: string): Promise<Product | null> {
-  if (!hasSupabaseConfig) {
-    return SEED_PRODUCTS.find((product) => product.slug === slug) ?? null;
-  }
-
   const supabase = requireSupabase();
   const { data, error } = await supabase.from('products').select(PRODUCT_SELECT).eq('slug', slug).maybeSingle();
   if (error) {
@@ -143,10 +134,6 @@ export async function fetchProductBySlug(slug: string): Promise<Product | null> 
 }
 
 export async function upsertProduct(product: Product): Promise<Product> {
-  if (!hasSupabaseConfig) {
-    return product;
-  }
-
   const supabase = requireSupabase();
   const productPayload = {
     id: product.id,
@@ -208,10 +195,6 @@ export async function upsertProduct(product: Product): Promise<Product> {
 }
 
 export async function archiveProduct(productId: string) {
-  if (!hasSupabaseConfig) {
-    return;
-  }
-
   const supabase = requireSupabase();
   const { error } = await supabase.from('products').update({ status: 'archived' }).eq('id', productId);
   if (error) {
