@@ -199,6 +199,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [cart]);
 
   useEffect(() => {
+    if (products.length === 0) {
+      return;
+    }
+
+    setCart((prev) =>
+      prev.filter((item) =>
+        products.some(
+          (product) =>
+            product.id === item.productId &&
+            product.variants.some((variant) => variant.id === item.variantId && variant.status === 'active'),
+        ),
+      ),
+    );
+  }, [products]);
+
+  useEffect(() => {
     window.localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlist));
   }, [wishlist]);
 

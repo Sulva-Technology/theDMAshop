@@ -7,6 +7,7 @@ import Auth from '@/components/Auth';
 import Checkout from '@/components/Checkout';
 import ContactUs from '@/components/ContactUs';
 import Home from '@/components/Home';
+import PolicyPage from '@/components/PolicyPage';
 import ProductDetails from '@/components/ProductDetails';
 import Shop from '@/components/Shop';
 import AdminDashboard from '@/components/admin/AdminDashboard';
@@ -75,6 +76,7 @@ function RoutedApp() {
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/products/:slug" element={<ProductDetails />} />
+          <Route path="/policies/:slug" element={<PolicyPage />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/checkout/success" element={<Checkout />} />
           <Route path="/about" element={<AboutUs />} />

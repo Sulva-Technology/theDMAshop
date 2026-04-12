@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Eye, EyeOff, ArrowRight, ChevronLeft } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStore } from '@/lib/store';
+import { POLICY_ROUTES } from '@/lib/policies';
 import { toast } from 'sonner';
 
 export default function Auth() {
@@ -193,7 +194,7 @@ export default function Auth() {
                 <div className="flex items-start space-x-3 pt-2">
                   <Checkbox id="terms" className="mt-1" />
                   <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed font-normal">
-                    By creating an account, you agree to our <a href="#" className="text-primary hover:underline">Terms of Service</a> and <a href="#" className="text-primary hover:underline">Privacy Policy</a>.
+                    By creating an account, you agree to our <Link to={POLICY_ROUTES.terms} className="text-primary hover:underline">Terms of Service</Link> and <Link to={POLICY_ROUTES.privacy} className="text-primary hover:underline">Privacy Policy</Link>.
                   </Label>
                 </div>
               )}

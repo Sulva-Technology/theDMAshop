@@ -24,6 +24,10 @@ type Address = {
   country: string;
 };
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -48,6 +52,21 @@ export default async function handler(req: any, res: any) {
 
     if (!email || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Missing checkout data' });
+    }
+
+    if (
+      items.some(
+        (item) =>
+          !item ||
+          typeof item.variantId !== 'string' ||
+          typeof item.productId !== 'string' ||
+          !isUuid(item.variantId) ||
+          !isUuid(item.productId),
+      )
+    ) {
+      return res.status(400).json({
+        error: 'Your cart contains an outdated item. Please remove it and try again.',
+      });
     }
 
     const variantIds = items.map((item) => item.variantId);

@@ -2,7 +2,9 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Instagram, Twitter, Facebook, Youtube } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useStore } from '@/lib/store';
+import { POLICY_ROUTES } from '@/lib/policies';
 
 export function Footer() {
   const { setCurrentPage, cmsContent } = useStore();
@@ -71,9 +73,9 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-12 border-t border-border/50 text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-medium text-center md:text-left">
           <p className="truncate w-full md:w-auto">{cmsContent.footer.copyright}</p>
           <div className="flex flex-wrap justify-center md:justify-end gap-4 md:gap-8">
-            <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-primary transition-colors">Cookie Settings</a>
+            <Link to={POLICY_ROUTES.privacy} className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link to={POLICY_ROUTES.terms} className="hover:text-primary transition-colors">Terms of Service</Link>
+            <Link to={POLICY_ROUTES.cookies} className="hover:text-primary transition-colors">Cookie Settings</Link>
           </div>
         </div>
       </div>

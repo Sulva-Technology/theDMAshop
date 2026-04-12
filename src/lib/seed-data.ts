@@ -35,8 +35,8 @@ export const SEED_CMS_CONTENT: CMSContent = {
       { label: 'Accessories', url: '/shop' },
     ],
     supportLinks: [
-      { label: 'Shipping Policy', url: '#' },
-      { label: 'Returns & Exchanges', url: '#' },
+      { label: 'Shipping Policy', url: '/policies/shipping' },
+      { label: 'Returns & Exchanges', url: '/policies/refund' },
       { label: 'Track Your Order', url: '/account/orders' },
       { label: 'Size Guide', url: '#' },
       { label: 'Contact Us', url: '/contact' },
@@ -56,7 +56,7 @@ export const SEED_CMS_CONTENT: CMSContent = {
     { title: 'Global Shipping', content: 'Fast, reliable delivery to over 50 countries worldwide.' },
     { title: 'Easy Returns', content: '30-day hassle-free return policy for your peace of mind.' },
     { title: 'Secure Shopping', content: 'Your data is protected with industry-leading encryption.' },
-    { title: 'Flexible Payment', content: 'Multiple payment options including Apple Pay & Google Pay.' },
+    { title: 'Flexible Payment', content: 'Secure card payments are handled through Stripe Checkout.' },
   ],
   contactUs: {
     email: 'support@thedmashop.com',
