@@ -65,7 +65,7 @@ export default function AdminOrders() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-heading font-bold">Orders</h1>
+          <h1 data-testid="admin-orders-heading" className="text-3xl font-heading font-bold">Orders</h1>
           <p className="text-muted-foreground mt-1">Review live orders and move fulfillment through valid states only.</p>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function AdminOrders() {
                   <td className="px-6 py-4 text-right">
                     <Sheet>
                       <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-secondary" onClick={() => setSelectedOrder(order)}>
+                        <Button data-testid={`admin-order-view-${order.id}`} variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-secondary" onClick={() => setSelectedOrder(order)}>
                           <Eye className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       </SheetTrigger>

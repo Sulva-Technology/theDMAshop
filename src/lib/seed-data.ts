@@ -22,10 +22,10 @@ export const SEED_CMS_CONTENT: CMSContent = {
     description:
       'Redefining day-to-day luxury through minimal design and premium craftsmanship. Join our journey towards elevated living.',
     socialLinks: [
-      { platform: 'Instagram', url: '#' },
-      { platform: 'Twitter', url: '#' },
-      { platform: 'Facebook', url: '#' },
-      { platform: 'Youtube', url: '#' },
+      { platform: 'Instagram', url: 'https://instagram.com' },
+      { platform: 'Twitter', url: 'https://x.com' },
+      { platform: 'Facebook', url: 'https://facebook.com' },
+      { platform: 'Youtube', url: 'https://youtube.com' },
     ],
     shopLinks: [
       { label: 'New Arrivals', url: '/shop' },
@@ -38,7 +38,7 @@ export const SEED_CMS_CONTENT: CMSContent = {
       { label: 'Shipping Policy', url: '/policies/shipping' },
       { label: 'Returns & Exchanges', url: '/policies/refund' },
       { label: 'Track Your Order', url: '/account/orders' },
-      { label: 'Size Guide', url: '#' },
+      { label: 'Size Guide', url: '/size-guide' },
       { label: 'Contact Us', url: '/contact' },
     ],
     copyright: '© 2026 theDMAshop. All rights reserved.',

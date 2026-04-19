@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img" aria-label="Admin upload fixture">
+  <rect width="240" height="240" fill="#f4efe6" rx="24"/>
+  <circle cx="120" cy="88" r="34" fill="#1f6f78"/>
+  <path d="M56 184c18-36 43-54 64-54s46 18 64 54" fill="#e67e22"/>
+  <text x="120" y="218" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#1f2933">DMA</text>
+</svg>

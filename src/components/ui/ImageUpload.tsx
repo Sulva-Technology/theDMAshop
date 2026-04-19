@@ -41,7 +41,8 @@ export function ImageUpload({
         toast.success('Image(s) uploaded successfully');
       }
     } catch (error) {
-      toast.error('Failed to upload image(s)');
+      const message = error instanceof Error ? error.message : 'Failed to upload image(s)';
+      toast.error(message);
       console.error(error);
     } finally {
       setIsUploading(false);
@@ -71,7 +72,9 @@ export function ImageUpload({
       }
       toast.success('Image removed');
     } catch (error) {
-      toast.error('Failed to remove image');
+      const message = error instanceof Error ? error.message : 'Failed to remove image';
+      toast.error(message);
+      console.error(error);
     }
   };
 
@@ -79,12 +82,13 @@ export function ImageUpload({
     <div className="space-y-4">
       <div 
         {...getRootProps()} 
+        data-testid={`image-upload-dropzone-${bucket}`}
         className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors
           ${isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-secondary/5'}
           ${isUploading ? 'opacity-50 pointer-events-none' : ''}
         `}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps()} data-testid={`image-upload-input-${bucket}`} />
         <div className="flex flex-col items-center justify-center gap-2">
           {isUploading ? (
             <Loader2 className="h-10 w-10 text-primary animate-spin" />

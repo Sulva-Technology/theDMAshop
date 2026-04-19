@@ -19,6 +19,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Seo } from '@/components/Seo';
 import { Separator } from '@/components/ui/separator';
 import { useStore } from '@/lib/store';
 
@@ -53,6 +54,7 @@ export default function AdminDashboard() {
     return (
       <button
         onClick={() => navigate(destinationForTab(id))}
+        data-testid={`admin-nav-${id}`}
         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${active ? 'bg-primary text-primary-foreground font-medium' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}
       >
         <Icon className="h-5 w-5" />
@@ -63,6 +65,12 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-secondary/10 flex font-sans">
+      <Seo
+        title="Admin Dashboard | theDMAshop"
+        description="Internal theDMAshop administration dashboard."
+        canonicalPath="/admin"
+        noindex
+      />
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border/50 transform transition-transform duration-300 lg:translate-x-0 lg:static lg:block ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full flex flex-col">
           <div className="h-20 flex items-center px-8 border-b border-border/50">
@@ -163,7 +171,7 @@ function DashboardOverview({ onNavigate }: { onNavigate: (tab: string) => void }
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-heading font-bold">Dashboard Overview</h1>
+          <h1 data-testid="admin-dashboard-heading" className="text-3xl font-heading font-bold">Dashboard Overview</h1>
           <p className="text-muted-foreground mt-1">Live operational snapshot from orders, customers, and inventory.</p>
         </div>
       </div>

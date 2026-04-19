@@ -73,7 +73,7 @@ export default function AdminAnalytics() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-heading font-bold">Analytics</h1>
+          <h1 data-testid="admin-analytics-heading" className="text-3xl font-heading font-bold">Analytics</h1>
           <p className="text-muted-foreground mt-1">Live revenue, order, and product performance from your real store data.</p>
         </div>
         <div className="flex items-center gap-2">

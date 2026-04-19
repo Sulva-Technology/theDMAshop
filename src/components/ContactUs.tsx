@@ -2,17 +2,20 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { Seo } from '@/components/Seo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Mail, Phone, MapPin, Send, MessageSquare, Clock, ArrowRight } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useStore } from '@/lib/store';
+import { buildBreadcrumbList } from '@/lib/seo';
+import { toast } from 'sonner';
 
 export default function ContactUs() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { cmsContent, submitContact } = useStore();
+  const { cmsContent, submitContact, setCurrentPage } = useStore();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -37,13 +40,42 @@ export default function ContactUs() {
       setEmail('');
       setOrderNumber('');
       setMessage('');
-    } catch {
+      toast.success('Your message has been sent.');
+    } catch (error: any) {
+      toast.error(error?.message ?? 'Unable to send your message right now.');
+    } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans">
+      <Seo
+        title="Contact theDMAshop | Customer Support"
+        description="Contact theDMAshop for order help, shipping questions, sizing advice, and customer support."
+        canonicalPath="/contact"
+        keywords={['contact theDMAshop', 'customer support', 'fashion support', 'order help']}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'ContactPage',
+              name: 'Contact theDMAshop',
+              description: 'Customer support and contact options for theDMAshop.',
+            },
+            {
+              '@type': 'Organization',
+              name: 'theDMAshop',
+              email: cmsContent.contactUs.email,
+              telephone: cmsContent.contactUs.phone,
+            },
+            buildBreadcrumbList([
+              { name: 'Home', path: '/' },
+              { name: 'Contact', path: '/contact' },
+            ]),
+          ],
+        }}
+      />
       <Navbar />
 
       <main className="flex-grow">
@@ -198,7 +230,7 @@ export default function ContactUs() {
                 <div className="space-y-6 pt-6 border-t border-border/50">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xl font-heading font-bold">Frequently Asked Questions</h3>
-                    <Button variant="link" className="text-primary p-0 h-auto font-bold">
+                    <Button variant="link" className="text-primary p-0 h-auto font-bold" onClick={() => setCurrentPage('/shipping-policy')}>
                       View all <ArrowRight className="h-4 w-4 ml-1" />
                     </Button>
                   </div>

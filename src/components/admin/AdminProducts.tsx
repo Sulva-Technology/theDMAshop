@@ -188,7 +188,7 @@ export default function AdminProducts() {
           </Button>
           <Sheet open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
             <SheetTrigger asChild>
-              <Button className="rounded-full font-bold premium-shadow-sm gap-2">
+              <Button data-testid="admin-products-add-button" className="rounded-full font-bold premium-shadow-sm gap-2">
                 <Plus className="h-4 w-4" />
                 Add Product
               </Button>
@@ -222,11 +222,11 @@ export default function AdminProducts() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="title">Product Title</Label>
-                    <Input id="title" placeholder="e.g. Premium Cotton Tee" className="h-12 rounded-xl bg-secondary/10 border-border/50" value={newProduct.title} onChange={(e) => setNewProduct({...newProduct, title: e.target.value})} />
+                    <Input data-testid="admin-products-title" id="title" placeholder="e.g. Premium Cotton Tee" className="h-12 rounded-xl bg-secondary/10 border-border/50" value={newProduct.title} onChange={(e) => setNewProduct({...newProduct, title: e.target.value})} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="summary">Short Summary</Label>
-                    <textarea id="summary" className="w-full min-h-[60px] p-3 rounded-xl bg-secondary/10 border border-border/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary resize-y" placeholder="Short summary for the product..." value={newProduct.summary} onChange={(e) => setNewProduct({...newProduct, summary: e.target.value})} />
+                    <textarea data-testid="admin-products-summary" id="summary" className="w-full min-h-[60px] p-3 rounded-xl bg-secondary/10 border border-border/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary resize-y" placeholder="Short summary for the product..." value={newProduct.summary} onChange={(e) => setNewProduct({...newProduct, summary: e.target.value})} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="desc">Description</Label>
@@ -241,7 +241,7 @@ export default function AdminProducts() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="price">Price</Label>
-                    <Input id="price" type="number" placeholder="0.00" className="h-12 rounded-xl bg-secondary/10 border-border/50" value={newProduct.price} onChange={(e) => setNewProduct({...newProduct, price: e.target.value})} />
+                    <Input data-testid="admin-products-price" id="price" type="number" placeholder="0.00" className="h-12 rounded-xl bg-secondary/10 border-border/50" value={newProduct.price} onChange={(e) => setNewProduct({...newProduct, price: e.target.value})} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="compare">Compare at Price</Label>
@@ -278,7 +278,7 @@ export default function AdminProducts() {
               </div>
               <SheetFooter className="p-6 border-t border-border/50 bg-background sticky bottom-0">
                 <Button variant="outline" onClick={() => setIsAddProductOpen(false)} className="rounded-xl h-12">Cancel</Button>
-                <Button className="rounded-xl h-12 font-bold premium-shadow-hover" onClick={handleSaveProduct}>Save Product</Button>
+                <Button data-testid="admin-products-save-button" className="rounded-xl h-12 font-bold premium-shadow-hover" onClick={handleSaveProduct}>Save Product</Button>
               </SheetFooter>
             </SheetContent>
           </Sheet>

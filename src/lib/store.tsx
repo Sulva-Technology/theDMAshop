@@ -14,6 +14,7 @@ import { EMPTY_CMS_CONTENT } from '@/lib/defaults';
 import { fetchCMSContent, saveCMSContent } from '@/lib/services/cms';
 import { submitContactMessage } from '@/lib/services/contact';
 import { fetchAdminCustomers } from '@/lib/services/customers';
+import { subscribeToNewsletter } from '@/lib/services/newsletter';
 import { fetchAdminOrders, fetchOrdersForCurrentUser, updateOrderFulfillmentStatus } from '@/lib/services/orders';
 import { archiveProduct, fetchProducts, upsertProduct } from '@/lib/services/products';
 import { hasSupabaseConfig, supabase } from '@/lib/supabase';
@@ -71,6 +72,7 @@ type StoreContextType = {
   setSelectedProductId: React.Dispatch<React.SetStateAction<string | null>>;
   refreshAll: () => Promise<void>;
   submitContact: (payload: ContactMessageInput) => Promise<void>;
+  submitNewsletter: (email: string) => Promise<void>;
 };
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -474,6 +476,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     await submitContactMessage(payload);
   }, []);
 
+  const submitNewsletter = useCallback(async (email: string) => {
+    await subscribeToNewsletter(email);
+  }, []);
+
   const value = useMemo<StoreContextType>(
     () => ({
       products,
@@ -517,6 +523,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setSelectedProductId,
       refreshAll,
       submitContact,
+      submitNewsletter,
     }),
     [
       products,
@@ -554,6 +561,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       selectedProductId,
       refreshAll,
       submitContact,
+      submitNewsletter,
     ],
   );
 

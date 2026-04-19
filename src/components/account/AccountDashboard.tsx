@@ -1,6 +1,7 @@
 import { BadgeCheck, Mail, MapPin, Package, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { Seo } from '@/components/Seo';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
 
@@ -11,6 +12,12 @@ export default function AccountDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Seo
+        title={isOrdersView ? 'Your Orders | theDMAshop' : 'Your Account | theDMAshop'}
+        description="Manage your account, profile, and order history at theDMAshop."
+        canonicalPath={isOrdersView ? '/account/orders' : '/account'}
+        noindex
+      />
       <div className="max-w-6xl mx-auto px-6 py-16 space-y-10">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div className="space-y-2">

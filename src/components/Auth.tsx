@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Eye, EyeOff, ArrowRight, ChevronLeft } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Seo } from '@/components/Seo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -53,6 +54,12 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-background flex font-sans">
+      <Seo
+        title={isLogin ? 'Sign In | theDMAshop' : 'Create Account | theDMAshop'}
+        description="Sign in or create your theDMAshop account to manage orders, save favorites, and check out faster."
+        canonicalPath="/auth"
+        noindex
+      />
       {/* Left Column: Image (Desktop Only) */}
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden bg-secondary">
         <img 
@@ -130,6 +137,7 @@ export default function Auth() {
                       <Label htmlFor="firstName">First Name</Label>
                       <Input 
                         id="firstName" 
+                        data-testid="auth-first-name"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         className="h-14 rounded-xl bg-secondary/10 border-border/50 focus-visible:ring-primary" 
@@ -140,6 +148,7 @@ export default function Auth() {
                       <Label htmlFor="lastName">Last Name</Label>
                       <Input 
                         id="lastName" 
+                        data-testid="auth-last-name"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         className="h-14 rounded-xl bg-secondary/10 border-border/50 focus-visible:ring-primary" 
@@ -154,6 +163,7 @@ export default function Auth() {
                 <Label htmlFor="email">Email Address</Label>
                 <Input 
                   id="email" 
+                  data-testid="auth-email"
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -174,6 +184,7 @@ export default function Auth() {
                 <div className="relative">
                   <Input 
                     id="password" 
+                    data-testid="auth-password"
                     type={showPassword ? 'text' : 'password'} 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -201,6 +212,7 @@ export default function Auth() {
 
               <Button 
                 type="submit"
+                data-testid="auth-submit"
                 className="w-full h-14 rounded-xl text-lg font-bold premium-shadow-hover mt-4"
                 disabled={isProcessing}
               >

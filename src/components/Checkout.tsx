@@ -20,6 +20,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { POLICY_ROUTES } from '@/lib/policies';
+import { Seo } from '@/components/Seo';
 import { useStore } from '@/lib/store';
 import { toast } from 'sonner';
 
@@ -185,6 +186,12 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row font-sans">
+      <Seo
+        title={isSuccessRoute ? 'Order Confirmed | theDMAshop' : 'Checkout | theDMAshop'}
+        description={isSuccessRoute ? 'Your theDMAshop order has been confirmed.' : 'Complete your secure checkout with theDMAshop.'}
+        canonicalPath={isSuccessRoute ? '/checkout/success' : '/checkout'}
+        noindex
+      />
       <div className="lg:hidden bg-secondary/20 border-b border-border/50 sticky top-0 z-40">
         <button
           onClick={() => setIsOrderSummaryOpen(!isOrderSummaryOpen)}

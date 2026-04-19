@@ -22,6 +22,24 @@ export function requireSupabase(): SupabaseClient {
   return supabase;
 }
 
+function mapStorageError(error: { message?: string; statusCode?: string | number }, action: 'upload' | 'delete') {
+  const message = error.message?.toLowerCase() ?? '';
+
+  if (message.includes('row-level security') || message.includes('not allowed')) {
+    return `You do not have permission to ${action} images in this bucket. Sign in with an admin account and confirm the Supabase storage policies are applied.`;
+  }
+
+  if (message.includes('bucket') && (message.includes('not found') || message.includes('does not exist'))) {
+    return 'The Supabase storage bucket is missing. Apply the latest migrations to create the public `product-media` bucket.';
+  }
+
+  if (action === 'upload') {
+    return 'Image upload failed. Check Supabase storage bucket setup and try again.';
+  }
+
+  return 'Image removal failed. Check Supabase storage bucket setup and try again.';
+}
+
 export async function uploadImage(file: File, bucket = 'media'): Promise<string | null> {
   if (!supabase) {
     throw new Error('Supabase storage is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then restart the app.');
@@ -36,7 +54,7 @@ export async function uploadImage(file: File, bucket = 'media'): Promise<string 
   });
 
   if (uploadError) {
-    throw uploadError;
+    throw new Error(mapStorageError(uploadError, 'upload'));
   }
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
@@ -55,6 +73,6 @@ export async function deleteImage(url: string, bucket = 'media') {
 
   const { error } = await supabase.storage.from(bucket).remove([fileName]);
   if (error) {
-    throw error;
+    throw new Error(mapStorageError(error, 'delete'));
   }
 }

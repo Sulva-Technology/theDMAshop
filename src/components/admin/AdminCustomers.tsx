@@ -34,7 +34,7 @@ export default function AdminCustomers() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-heading font-bold">Customers</h1>
+          <h1 data-testid="admin-customers-heading" className="text-3xl font-heading font-bold">Customers</h1>
           <p className="text-muted-foreground mt-1">Read-only customer summaries pulled from live profiles and order activity.</p>
         </div>
         <Button className="rounded-full font-bold" disabled>
@@ -93,7 +93,7 @@ export default function AdminCustomers() {
                   <td className="px-6 py-4 text-right">
                     <Sheet>
                       <SheetTrigger asChild>
-                        <Button variant="ghost" className="rounded-full" onClick={() => setSelectedCustomerId(customer.id)}>
+                        <Button data-testid={`admin-customer-view-${customer.id}`} variant="ghost" className="rounded-full" onClick={() => setSelectedCustomerId(customer.id)}>
                           View profile
                         </Button>
                       </SheetTrigger>

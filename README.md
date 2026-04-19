@@ -14,12 +14,15 @@ Dynamic single-store commerce app built with React, Vite, Supabase, and Stripe.
 1. Install dependencies:
    `npm install`
 2. Copy `.env.example` to `.env.local` and set the required keys.
-3. Apply [supabase/migrations/001_initial_storefront.sql](/C:/sulvatech/thedmashop/supabase/migrations/001_initial_storefront.sql) to your Supabase project.
-4. Seed required CMS content:
+3. Apply the Supabase migrations in order:
+   `001_initial_storefront.sql`, `002_fix_profiles_admin_policy.sql`, `003_add_newsletter_subscribers.sql`, and `004_add_product_media_storage.sql`
+4. Install the admin browser test runtime:
+   `npm run test:admin:install`
+5. Seed required CMS content:
    `npm run seed:cms`
-5. Promote your first admin user after that user signs up:
+6. Create or promote your first admin user:
    `npm run promote:admin`
-4. Run the frontend:
+7. Run the frontend:
    `npm run dev`
 
 ## Required Environment Variables
@@ -30,6 +33,10 @@ Dynamic single-store commerce app built with React, Vite, Supabase, and Stripe.
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `ADMIN_BOOTSTRAP_EMAIL`
+- `ADMIN_BOOTSTRAP_PASSWORD`
+- `ADMIN_BOOTSTRAP_NAME`
+- `E2E_ADMIN_EMAIL`
+- `E2E_ADMIN_PASSWORD`
 - `STRIPE_PUBLIC_KEY`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
@@ -37,21 +44,35 @@ Dynamic single-store commerce app built with React, Vite, Supabase, and Stripe.
 ## Production Launch Sequence
 
 1. Set all env vars, including `ADMIN_BOOTSTRAP_EMAIL`.
-2. Run the Supabase migration.
+2. Run all Supabase migrations through `004_add_product_media_storage.sql`.
 3. Run `npm run seed:cms` to create required storefront CMS rows if they are missing.
-4. Sign up the first real admin user through the app.
-5. Run `npm run promote:admin` to grant that user the `admin` role.
+4. Run `npm run promote:admin` to create or promote the first admin user.
+5. Run `npm run test:admin:install` on the test runner or deployment box that will execute browser tests.
 6. Configure the Stripe webhook to target `api/stripe-webhook.ts`.
-7. Verify the `product-media` bucket is public and can serve catalog images.
+7. The `product-media` bucket is now provisioned by migration and should remain public for catalog and CMS assets.
 
 ## Verification Checklist
 
 - Confirm sign-up and sign-in succeed with Supabase Auth.
 - Confirm `/admin` is blocked for non-admin users and opens for the promoted admin.
+- Run `npm run test:admin` to verify admin routing, product uploads, CMS saves, customer visibility, and order-module access.
 - Confirm `/shop` and `/products/:slug` load only Supabase-backed catalog data.
 - Confirm checkout session creation succeeds and Stripe redirects back to `/checkout/success`.
 - Confirm webhook payment finalization updates orders and inventory.
 - Confirm new orders appear in both `/account/orders` and `/admin/orders`.
+
+## Admin Media Storage
+
+- `004_add_product_media_storage.sql` creates the public `product-media` bucket used by `AdminProducts` and `AdminCMS`.
+- Storage access is enforced with `storage.objects` policies: public read, admin-only write/delete.
+- If uploads fail with a permission error, confirm the latest storage migration has been applied and that the signed-in user has the `admin` profile role.
+
+## Admin E2E Tests
+
+- Install browsers once with `npm run test:admin:install`.
+- Run the suite with `npm run test:admin` or `npm run test:admin:headed`.
+- The suite uses `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD`, falling back to `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD`.
+- For full order-state coverage, run the suite against a Supabase project that already contains at least one actionable order.
 
 ## Payments
 
