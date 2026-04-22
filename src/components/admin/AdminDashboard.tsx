@@ -35,17 +35,13 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user, setCurrentPage } = useStore();
 
-  const activeTab = location.pathname.endsWith('/products')
-    ? 'products'
-    : location.pathname.endsWith('/orders')
-      ? 'orders'
-      : location.pathname.endsWith('/customers')
-        ? 'customers'
-        : location.pathname.endsWith('/content')
-          ? 'cms'
-          : location.pathname.endsWith('/analytics')
-            ? 'analytics'
-            : 'dashboard';
+  const activeTab = useMemo(() => {
+    const segments = location.pathname.split('/').filter(Boolean);
+    const last = segments[segments.length - 1];
+    if (!last || last === 'admin') return 'dashboard';
+    if (last === 'content') return 'cms';
+    return last;
+  }, [location.pathname]);
 
   const destinationForTab = (id: string) => (id === 'dashboard' ? '/admin' : `/admin/${id}`);
 
@@ -116,7 +112,7 @@ export default function AdminDashboard() {
           </div>
 
           <Button className="rounded-full gap-2 hidden sm:flex" onClick={() => navigate('/admin/products')}>
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 mr-2" />
             Add Product
           </Button>
         </header>

@@ -48,14 +48,17 @@ Dynamic single-store commerce app built with React, Vite, Supabase, and Stripe.
 3. Run `npm run seed:cms` to create required storefront CMS rows if they are missing.
 4. Run `npm run promote:admin` to create or promote the first admin user.
 5. Run `npm run test:admin:install` on the test runner or deployment box that will execute browser tests.
-6. Configure the Stripe webhook to target `api/stripe-webhook.ts`.
-7. The `product-media` bucket is now provisioned by migration and should remain public for catalog and CMS assets.
+6. Deploy on Vercel with the repo-root `vercel.json` so SPA routes like `/admin` and `/products/:slug` rewrite to `index.html`.
+7. Configure the Stripe webhook to target `api/stripe-webhook.ts`.
+8. The `product-media` bucket is now provisioned by migration; keep it public and verify it can serve catalog images.
+9. Sign in at `/auth`, then open `/admin` with the promoted admin account.
 
 ## Verification Checklist
 
 - Confirm sign-up and sign-in succeed with Supabase Auth.
 - Confirm `/admin` is blocked for non-admin users and opens for the promoted admin.
 - Run `npm run test:admin` to verify admin routing, product uploads, CMS saves, customer visibility, and order-module access.
+- Confirm direct browser hits to `/admin`, `/admin/products`, `/auth`, and `/products/:slug` load the React app instead of a host-level 404.
 - Confirm `/shop` and `/products/:slug` load only Supabase-backed catalog data.
 - Confirm checkout session creation succeeds and Stripe redirects back to `/checkout/success`.
 - Confirm webhook payment finalization updates orders and inventory.

@@ -47,8 +47,8 @@ type StoreContextType = {
   user: User;
   profile: Profile | null;
   setUser: React.Dispatch<React.SetStateAction<User>>;
-  login: (email: string, password: string) => Promise<void>;
-  signUp: (fullName: string, email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  signUp: (fullName: string, email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   authLoading: boolean;
   orders: Order[];
@@ -86,7 +86,7 @@ function mapProfileToUser(profile: Profile | null): User {
     id: profile.id,
     name: profile.fullName,
     email: profile.email,
-    role: profile.role === 'admin' ? 'ADMIN' : 'CUSTOMER',
+    role: profile.role?.toLowerCase() === 'admin' ? 'ADMIN' : 'CUSTOMER',
   };
 }
 
@@ -118,14 +118,15 @@ function getRouteFromPage(page: string) {
 }
 
 function getPageFromPath(pathname: string) {
-  if (pathname === '/') return 'home';
-  if (pathname.startsWith('/shop')) return 'shop';
-  if (pathname.startsWith('/products')) return 'details';
-  if (pathname.startsWith('/checkout')) return 'checkout';
-  if (pathname.startsWith('/about')) return 'about';
-  if (pathname.startsWith('/contact')) return 'contact';
-  if (pathname.startsWith('/auth')) return 'auth';
-  if (pathname.startsWith('/admin')) return 'admin';
+  const cleanPath = pathname.replace(/\/$/, '') || '/';
+  if (cleanPath === '/') return 'home';
+  if (cleanPath.startsWith('/shop')) return 'shop';
+  if (cleanPath.startsWith('/products')) return 'details';
+  if (cleanPath.startsWith('/checkout')) return 'checkout';
+  if (cleanPath.startsWith('/about')) return 'about';
+  if (cleanPath.startsWith('/contact')) return 'contact';
+  if (cleanPath.startsWith('/auth')) return 'auth';
+  if (cleanPath.startsWith('/admin')) return 'admin';
   return 'home';
 }
 
@@ -170,6 +171,14 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
     defaultAddress: data.default_address ?? null,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
+  };
+}
+
+async function resolveUserFromSession(userId: string) {
+  const nextProfile = await fetchProfile(userId);
+  return {
+    profile: nextProfile,
+    user: mapProfileToUser(nextProfile),
   };
 }
 
@@ -315,12 +324,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
 
       if (session?.user) {
-        const nextProfile = await fetchProfile(session.user.id);
+        const { profile: nextProfile, user: nextUser } = await resolveUserFromSession(session.user.id);
         if (!active) {
           return;
         }
         setProfile(nextProfile);
-        setUser(mapProfileToUser(nextProfile));
+        setUser(nextUser);
+      } else {
+        setProfile(null);
+        setUser(null);
       }
 
       setAuthLoading(false);
@@ -332,12 +344,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!session?.user) {
         setProfile(null);
         setUser(null);
+        setAuthLoading(false);
         return;
       }
 
-      const nextProfile = await fetchProfile(session.user.id);
+      const { profile: nextProfile, user: nextUser } = await resolveUserFromSession(session.user.id);
       setProfile(nextProfile);
-      setUser(mapProfileToUser(nextProfile));
+      setUser(nextUser);
+      setAuthLoading(false);
     });
 
     return () => {
@@ -384,10 +398,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       throw new Error('Supabase auth is not configured.');
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       throw error;
     }
+
+    if (data.session?.user) {
+      const { profile: nextProfile, user: userObj } = await resolveUserFromSession(data.session.user.id);
+      setProfile(nextProfile);
+      setUser(userObj);
+      return userObj;
+    }
+    return null;
   }, []);
 
   const signUp = useCallback(async (fullName: string, email: string, password: string) => {
@@ -395,7 +417,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       throw new Error('Supabase auth is not configured.');
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -408,6 +430,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (error) {
       throw error;
     }
+
+    if (data.session?.user) {
+      const { profile: nextProfile, user: userObj } = await resolveUserFromSession(data.session.user.id);
+      setProfile(nextProfile);
+      setUser(userObj);
+      return userObj;
+    }
+    return null;
   }, []);
 
   const logout = useCallback(async () => {
