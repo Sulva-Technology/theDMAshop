@@ -14,6 +14,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Seo } from '@/components/Seo';
 import { ProductCard } from '@/components/ui/ProductCard';
+import { StorefrontPreloader } from '@/components/ui/StorefrontPreloader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -264,9 +265,10 @@ export default function Shop() {
         </div>
 
         {productsLoading ? (
-          <div className="rounded-3xl border border-border/50 bg-secondary/10 p-10 text-center text-muted-foreground">
-            Loading products...
-          </div>
+          <StorefrontPreloader
+            title="Building the rack"
+            message="Loading active products, filters, pricing, and wishlist context."
+          />
         ) : productsError ? (
           <div className="rounded-3xl border border-amber-500/20 bg-amber-500/5 p-10 text-center space-y-3">
             <h2 className="text-2xl font-heading font-bold">Catalog unavailable</h2>

@@ -14,6 +14,7 @@ import Shop from '@/components/Shop';
 import { Seo } from '@/components/Seo';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import AccountDashboard from '@/components/account/AccountDashboard';
+import { StorefrontPreloader } from '@/components/ui/StorefrontPreloader';
 import { StoreProvider, useStore } from '@/lib/store';
 
 function AuthenticatedRoute() {
@@ -21,7 +22,13 @@ function AuthenticatedRoute() {
   const location = useLocation();
 
   if (authLoading) {
-    return <div className="min-h-screen bg-background" />;
+    return (
+      <StorefrontPreloader
+        fullscreen
+        title="Opening your account"
+        message="Verifying your session and preparing your dashboard."
+      />
+    );
   }
 
   if (!user) {
@@ -35,7 +42,13 @@ function AdminRoute() {
   const { user, authLoading } = useStore();
 
   if (authLoading) {
-    return <div className="min-h-screen bg-background" />;
+    return (
+      <StorefrontPreloader
+        fullscreen
+        title="Preparing the control room"
+        message="Checking your admin access and syncing the latest store activity."
+      />
+    );
   }
 
   if (!user) {

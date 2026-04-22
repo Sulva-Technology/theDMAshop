@@ -7,6 +7,7 @@ import { Categories } from '@/components/home/Categories';
 import { BrandStory } from '@/components/home/BrandStory';
 import { Policies } from '@/components/home/Policies';
 import { Seo } from '@/components/Seo';
+import { StorefrontPreloader } from '@/components/ui/StorefrontPreloader';
 import { motion } from 'motion/react';
 import { useStore } from '@/lib/store';
 import { buildBreadcrumbList } from '@/lib/seo';
@@ -51,10 +52,11 @@ export default function Home() {
       
       <main className="flex-grow">
         {productsLoading || contentLoading ? (
-          <section className="max-w-5xl mx-auto px-6 py-24">
-            <div className="rounded-3xl border border-border/50 bg-secondary/10 p-10 text-center text-muted-foreground">
-              Loading storefront data...
-            </div>
+          <section className="max-w-6xl mx-auto px-6 py-16 sm:py-24">
+            <StorefrontPreloader
+              title="Setting the scene"
+              message="Pulling the latest campaign content, featured products, and navigation details."
+            />
           </section>
         ) : contentError ? (
           <section className="max-w-5xl mx-auto px-6 py-24">

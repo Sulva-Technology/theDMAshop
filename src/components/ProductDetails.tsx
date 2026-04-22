@@ -8,6 +8,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Seo } from '@/components/Seo';
 import { ProductCard } from '@/components/ui/ProductCard';
+import { StorefrontPreloader } from '@/components/ui/StorefrontPreloader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -60,9 +61,10 @@ export default function ProductDetails() {
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
         <main className="flex-grow max-w-7xl mx-auto w-full px-6 py-20">
-          <div className="rounded-3xl border border-border/50 bg-secondary/10 p-10 text-center text-muted-foreground">
-            Loading product details...
-          </div>
+          <StorefrontPreloader
+            title="Unwrapping product details"
+            message="Loading imagery, variants, and purchase details for this piece."
+          />
         </main>
         <Footer />
       </div>
